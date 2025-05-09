@@ -3,6 +3,7 @@ package com.example.event_hub.Model;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.example.event_hub.Model.ResultWrapper; // Ensure this import path is correct
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -41,13 +42,13 @@ public class EventHubRepository {
 
     // --- LiveData for specific operation outcomes ---
     private final MutableLiveData<ResultWrapper<UserModel>> _userProfileOperationState = new MutableLiveData<>(new ResultWrapper.Idle<>());
-    public LiveData<ResultWrapper<UserModel>> userProfileOperationState = _userProfileOperationState; // For fetch, edit (returns updated user)
+    public LiveData<ResultWrapper<UserModel>> userProfileOperationState = _userProfileOperationState;
 
     private final MutableLiveData<ResultWrapper<EventModel>> _singleEventOperationState = new MutableLiveData<>(new ResultWrapper.Idle<>());
-    public LiveData<ResultWrapper<EventModel>> singleEventOperationState = _singleEventOperationState; // For create, fetch single
+    public LiveData<ResultWrapper<EventModel>> singleEventOperationState = _singleEventOperationState;
 
     private final MutableLiveData<ResultWrapper<Void>> _voidOperationState = new MutableLiveData<>(new ResultWrapper.Idle<>());
-    public LiveData<ResultWrapper<Void>> voidOperationState = _voidOperationState; // For join, delete, ban, simple updates
+    public LiveData<ResultWrapper<Void>> voidOperationState = _voidOperationState;
 
     private final MutableLiveData<ResultWrapper<MediaModel>> _mediaUploadOperationState = new MutableLiveData<>(new ResultWrapper.Idle<>());
     public LiveData<ResultWrapper<MediaModel>> mediaUploadOperationState = _mediaUploadOperationState;
@@ -141,7 +142,7 @@ public class EventHubRepository {
     }
 
     public void editProfile(String userId, UserDetails updatedDetails) {
-        _userProfileOperationState.postValue(new ResultWrapper.Loading<>()); // Indicate loading for the profile itself
+        _userProfileOperationState.postValue(new ResultWrapper.Loading<>());
         executorService.submit(() -> {
             try {
                 Thread.sleep(900);
@@ -151,9 +152,7 @@ public class EventHubRepository {
 
                 if (userOpt.isPresent()) {
                     UserModel user = userOpt.get();
-                    user.setUserDetails(updatedDetails); // Update the UserDetails within the UserModel
-                    // Simulate saving the whole UserModel or just the UserDetails part
-                    // For consistency, we post the updated UserModel
+                    user.setUserDetails(updatedDetails);
                     _userProfileOperationState.postValue(new ResultWrapper.Success<>(user));
                     System.out.println("EventHubRepository: Profile updated for user " + userId);
                 } else {
@@ -176,9 +175,8 @@ public class EventHubRepository {
                     simulatedParticipation.removeIf(p -> userId.equals(p.getAccountId()));
                     simulatedInvitations.removeIf(i -> userId.equals(i.getAccountId()));
                     simulatedMedia.removeIf(m -> userId.equals(m.getAccountId()));
-                    _voidOperationState.postValue(new ResultWrapper.Success<>(null)); // Success
+                    _voidOperationState.postValue(new ResultWrapper.Success<>(null));
                     System.out.println("EventHubRepository: User " + userId + " deleted.");
-                    // Potentially refresh any lists that might be affected if they don't auto-update
                 } else {
                     _voidOperationState.postValue(new ResultWrapper.Error<>("User deletion failed: User not found."));
                 }
@@ -200,14 +198,13 @@ public class EventHubRepository {
                 if (userOpt.isPresent()) {
                     UserModel user = userOpt.get();
                     user.setStatus("banned");
-                    // Also update participant status for this user in all events to 'banned'
                     simulatedParticipation.forEach(p -> {
                         if (userId.equals(p.getAccountId())) {
                             p.setStatus("banned");
                         }
                     });
-                    _voidOperationState.postValue(new ResultWrapper.Success<>(null)); // Success
-                    fetchUserProfile(userId); // Refresh the user profile state
+                    _voidOperationState.postValue(new ResultWrapper.Success<>(null));
+                    fetchUserProfile(userId);
                     System.out.println("EventHubRepository: User " + userId + " banned.");
                 } else {
                     _voidOperationState.postValue(new ResultWrapper.Error<>("Ban user failed: User not found."));
@@ -304,20 +301,23 @@ public class EventHubRepository {
                         .findFirst();
 
                 if (existingParticipation.isPresent()) {
-                    if ("banned".equals(existingParticipation.get().getStatus())) {
+                    ParticipantModel participation = existingParticipation.get();
+                    if ("banned".equals(participation.getStatus())) {
                         _voidOperationState.postValue(new ResultWrapper.Error<>("Cannot join: User is banned from this event."));
-                    } else if ("attending".equals(existingParticipation.get().getStatus())) {
+                    } else if ("attending".equals(participation.getStatus())) {
                         _voidOperationState.postValue(new ResultWrapper.Error<>("Already attending this event."));
                     } else { // e.g. cancelled, can re-join by setting to attending
-                        existingParticipation.get().setStatus("attending");
-                        existingParticipation.get().setEventRole("participant"); // Reset role
-                        _voidOperationState.postValue(new ResultWrapper.Success<>(null)); // Rejoined
+                        participation.setStatus("attending");
+                        participation.setEventRole("participant");
+                        _voidOperationState.postValue(new ResultWrapper.Success<>(null));
                         System.out.println("EventHubRepository: User " + userId + " re-joined event " + eventId);
+                        fetchEventParticipants(eventId); // Refresh participant list for this event
                     }
                 } else {
                     simulatedParticipation.add(new ParticipantModel(eventId, userId, "attending", "participant"));
                     _voidOperationState.postValue(new ResultWrapper.Success<>(null));
                     System.out.println("EventHubRepository: User " + userId + " joined event " + eventId);
+                    fetchEventParticipants(eventId); // Refresh participant list for this event
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -325,6 +325,44 @@ public class EventHubRepository {
             }
         });
     }
+
+    /**
+     * Allows a user to leave an event.
+     * @param eventId The ID of the event.
+     * @param userId The ID of the user leaving the event.
+     */
+    public void leaveEvent(String eventId, String userId) {
+        _voidOperationState.postValue(new ResultWrapper.Loading<>());
+        executorService.submit(() -> {
+            try {
+                Thread.sleep(600);
+                Optional<ParticipantModel> existingParticipation = simulatedParticipation.stream()
+                        .filter(p -> eventId.equals(p.getEventId()) && userId.equals(p.getAccountId()))
+                        .findFirst();
+
+                if (existingParticipation.isPresent()) {
+                    ParticipantModel participation = existingParticipation.get();
+                    if ("attending".equals(participation.getStatus())) {
+                        // Option 1: Remove the record entirely
+                        // simulatedParticipation.remove(participation);
+                        // Option 2: Change status to "cancelled" or "left"
+                        participation.setStatus("cancelled"); // Or a new "left" status if defined
+                        _voidOperationState.postValue(new ResultWrapper.Success<>(null));
+                        System.out.println("EventHubRepository: User " + userId + " left event " + eventId);
+                    } else {
+                        _voidOperationState.postValue(new ResultWrapper.Error<>("User is not currently attending this event. Status: " + participation.getStatus()));
+                    }
+                } else {
+                    _voidOperationState.postValue(new ResultWrapper.Error<>("User was not found as a participant in this event."));
+                }
+                fetchEventParticipants(eventId); // Refresh participant list for this event
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                _voidOperationState.postValue(new ResultWrapper.Error<>("Leave event interrupted."));
+            }
+        });
+    }
+
 
     public void createEvent(EventModel eventToCreate) {
         _singleEventOperationState.postValue(new ResultWrapper.Loading<>());
@@ -339,18 +377,17 @@ public class EventHubRepository {
                     _singleEventOperationState.postValue(new ResultWrapper.Error<>("Create event failed: Title is required."));
                     return;
                 }
-                if (eventToCreate.getId() == null || eventToCreate.getId().isEmpty()) { // Ensure ID is set
+                if (eventToCreate.getId() == null || eventToCreate.getId().isEmpty()) {
                     eventToCreate.setId("event_new_" + UUID.randomUUID().toString().substring(0, 8));
                 }
 
                 simulatedEvents.add(eventToCreate);
-                // Add organizer as participant
-                simulatedParticipation.removeIf(p -> p.getEventId().equals(eventToCreate.getId()) && p.getAccountId().equals(eventToCreate.getCreatedBy())); // Remove if any prior, then add
+                simulatedParticipation.removeIf(p -> p.getEventId().equals(eventToCreate.getId()) && p.getAccountId().equals(eventToCreate.getCreatedBy()));
                 simulatedParticipation.add(new ParticipantModel(eventToCreate.getId(), eventToCreate.getCreatedBy(), "attending", "organizer"));
 
                 _singleEventOperationState.postValue(new ResultWrapper.Success<>(eventToCreate));
                 System.out.println("EventHubRepository: Created event " + eventToCreate.getId());
-                fetchPublicEvents(); // Refresh the public list
+                fetchPublicEvents();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 _singleEventOperationState.postValue(new ResultWrapper.Error<>("Create event interrupted."));
@@ -365,7 +402,7 @@ public class EventHubRepository {
             try {
                 Thread.sleep(750);
                 List<String> accountIds = simulatedParticipation.stream()
-                        .filter(p -> eventId.equals(p.getEventId()) && !"banned".equals(p.getStatus())) // Exclude banned from active list display maybe?
+                        .filter(p -> eventId.equals(p.getEventId()) && "attending".equals(p.getStatus())) // Only show attending
                         .map(ParticipantModel::getAccountId)
                         .distinct()
                         .collect(Collectors.toList());
@@ -386,13 +423,15 @@ public class EventHubRepository {
         executorService.submit(() -> {
             try {
                 Thread.sleep(500);
+                // For admin/organizer removal, we might just remove the record
+                // or set status to "removed_by_organizer" etc.
                 boolean removed = simulatedParticipation.removeIf(p ->
                         eventId.equals(p.getEventId()) && participantAccountId.equals(p.getAccountId()));
 
                 if (removed) {
                     _voidOperationState.postValue(new ResultWrapper.Success<>(null));
                     System.out.println("EventHubRepository: Removed participant " + participantAccountId + " from event " + eventId);
-                    fetchEventParticipants(eventId); // Refresh participant list for the event
+                    fetchEventParticipants(eventId);
                 } else {
                     _voidOperationState.postValue(new ResultWrapper.Error<>("Remove participant failed: Not found."));
                 }
@@ -410,7 +449,6 @@ public class EventHubRepository {
         executorService.submit(() -> {
             try {
                 Thread.sleep(650);
-                // Filter out invitations for events that no longer exist (optional cleanup)
                 List<String> existingEventIds = simulatedEvents.stream().map(EventModel::getId).collect(Collectors.toList());
                 simulatedInvitations.removeIf(inv -> !existingEventIds.contains(inv.getEventId()));
 
@@ -426,7 +464,7 @@ public class EventHubRepository {
     }
 
     public void updateInvitationStatus(String invitationId, String newStatus, String accountIdToRefresh) {
-        _voidOperationState.postValue(new ResultWrapper.Loading<>()); // Use void for general success/fail of this action
+        _voidOperationState.postValue(new ResultWrapper.Loading<>());
         executorService.submit(() -> {
             try {
                 Thread.sleep(400);
@@ -438,7 +476,7 @@ public class EventHubRepository {
                     InvitationModel inv = invOpt.get();
                     String currentStatus = inv.getInvitationStatus();
 
-                    if (("revoked".equals(currentStatus) || "expired".equals(currentStatus)) && !"sent".equals(newStatus)) { // allow re-sending a revoked/expired?
+                    if (("revoked".equals(currentStatus) || "expired".equals(currentStatus)) && !"sent".equals(newStatus)) {
                         _voidOperationState.postValue(new ResultWrapper.Error<>("Cannot update invitation: Already " + currentStatus));
                         return;
                     }
@@ -448,37 +486,21 @@ public class EventHubRepository {
                     }
 
                     inv.setInvitationStatus(newStatus);
-                    if ("accepted".equals(newStatus) || "declined".equals(newStatus) || "revoked".equals(newStatus)) { // Revoked by user action could be a response
+                    if ("accepted".equals(newStatus) || "declined".equals(newStatus) || "revoked".equals(newStatus)) {
                         inv.setRespondedAt(new Date());
-                    } else { // e.g. "sent" status might clear respondedAt
+                    } else {
                         inv.setRespondedAt(null);
                     }
 
                     if ("accepted".equals(newStatus)) {
-                        // Add or update participation record
-                        Optional<ParticipantModel> participantOpt = simulatedParticipation.stream()
-                                .filter(p -> p.getEventId().equals(inv.getEventId()) && p.getAccountId().equals(inv.getAccountId()))
-                                .findFirst();
-                        if (participantOpt.isPresent()) {
-                            participantOpt.get().setStatus("attending"); // Ensure they are attending
-                            participantOpt.get().setEventRole("participant"); // Ensure correct role
-                        } else {
-                            simulatedParticipation.add(new ParticipantModel(inv.getEventId(), inv.getAccountId(), "attending", "participant"));
-                        }
-                        System.out.println("EventHubRepository: Added/Updated participant " + inv.getAccountId() + " for event " + inv.getEventId());
-                    } else if ("declined".equals(newStatus) || "revoked".equals(newStatus) || "expired".equals(newStatus)) { // "expired" handled by cron usually
-                        // If user declines/revokes, set participation status to cancelled
-                        simulatedParticipation.stream()
-                                .filter(p -> inv.getEventId().equals(p.getEventId()) && inv.getAccountId().equals(p.getAccountId()))
-                                .findFirst().ifPresent(p -> p.setStatus("cancelled"));
+                        joinPublicEvent(inv.getEventId(), inv.getAccountId()); // Use existing join logic
+                    } else if ("declined".equals(newStatus) || "revoked".equals(newStatus) || "expired".equals(newStatus)) {
+                        leaveEvent(inv.getEventId(), inv.getAccountId()); // Use leave logic
                     }
 
                     _voidOperationState.postValue(new ResultWrapper.Success<>(null));
                     System.out.println("EventHubRepository: Updated invitation " + invitationId + " to status " + newStatus);
-                    fetchInvitationsForUser(accountIdToRefresh); // Refresh the user's invitation list
-                    if ("accepted".equals(newStatus) || "declined".equals(newStatus)) { // If status change affects participation list, refresh it.
-                        fetchEventParticipants(inv.getEventId());
-                    }
+                    fetchInvitationsForUser(accountIdToRefresh);
                 } else {
                     _voidOperationState.postValue(new ResultWrapper.Error<>("Invitation status update failed: Not found."));
                 }
@@ -527,7 +549,7 @@ public class EventHubRepository {
                 simulatedMedia.add(mediaToUpload);
                 _mediaUploadOperationState.postValue(new ResultWrapper.Success<>(mediaToUpload));
                 System.out.println("EventHubRepository: Media uploaded: " + mediaToUpload.getMediaId());
-                fetchMediaForEvent(mediaToUpload.getEventId()); // Refresh media list for the event
+                fetchMediaForEvent(mediaToUpload.getEventId());
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 _mediaUploadOperationState.postValue(new ResultWrapper.Error<>("Media upload interrupted."));
@@ -535,7 +557,7 @@ public class EventHubRepository {
         });
     }
 
-    public void deleteMedia(String mediaId, String eventIdToRefresh) { // Added eventIdToRefresh
+    public void deleteMedia(String mediaId, String eventIdToRefresh) {
         _voidOperationState.postValue(new ResultWrapper.Loading<>());
         executorService.submit(() -> {
             try {
@@ -545,7 +567,7 @@ public class EventHubRepository {
                     _voidOperationState.postValue(new ResultWrapper.Success<>(null));
                     System.out.println("EventHubRepository: Media deleted: " + mediaId);
                     if (eventIdToRefresh != null) {
-                        fetchMediaForEvent(eventIdToRefresh); // Refresh media list
+                        fetchMediaForEvent(eventIdToRefresh);
                     }
                 } else {
                     _voidOperationState.postValue(new ResultWrapper.Error<>("Delete media failed: Not found."));

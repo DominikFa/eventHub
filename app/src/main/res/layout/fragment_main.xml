@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/event_hub_main_background_main_screen"
+    tools:context="com.example.event_hub.View.MainFragment">
+
+    <TextView
+        android:id="@+id/tv_app_title_main"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="24dp"
+        android:fontFamily="@font/jaro_custom"
+        android:text="EventHub"
+        android:textColor="@android:color/white"
+        android:textSize="48sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/btn_profile_or_login_main"/>
+
+    <ImageButton
+        android:id="@+id/btn_profile_or_login_main"
+        android:layout_width="58dp"
+        android:layout_height="58dp"
+        android:layout_marginEnd="24dp"
+        android:background="@drawable/button_purple_gradient_rounded"
+        android:src="@drawable/ic_login"
+        android:contentDescription="Login or Profile"
+        android:padding="12dp"
+        android:scaleType="fitCenter"
+        app:tint="@android:color/white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/tv_app_title_main"
+        app:layout_constraintBottom_toBottomOf="@id/tv_app_title_main"/>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/cl_main_content_area"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/rounded_top_corners_background_main"
+        app:layout_constraintBottom_toTopOf="@+id/bottom_navigation_main"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_app_title_main">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_select_date_main"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Wybierz datę"
+            android:textColor="@color/event_hub_purple_primary_main"
+            app:icon="@drawable/ic_calendar"
+            app:iconTint="@color/event_hub_purple_primary_main"
+            app:strokeColor="@color/event_hub_purple_primary_main"
+            app:cornerRadius="20dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_events_main"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="16dp"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/btn_select_date_main"
+            tools:listitem="@layout/item_event_card" />
+
+        <TextView
+            android:id="@+id/tv_no_events_main"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="No events found for the selected date."
+            android:textSize="16sp"
+            android:textColor="@android:color/darker_gray"
+            android:visibility="gone"
+            app:layout_constraintTop_toTopOf="@id/rv_events_main"
+            app:layout_constraintBottom_toBottomOf="@id/rv_events_main"
+            app:layout_constraintStart_toStartOf="@id/rv_events_main"
+            app:layout_constraintEnd_toEndOf="@id/rv_events_main"
+            tools:visibility="visible"/>
+        <ProgressBar
+            android:id="@+id/pb_main_loading"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintTop_toTopOf="@+id/cl_main_content_area"
+            app:layout_constraintBottom_toBottomOf="@+id/cl_main_content_area"
+            app:layout_constraintStart_toStartOf="@+id/cl_main_content_area"
+            app:layout_constraintEnd_toEndOf="@+id/cl_main_content_area"
+            tools:visibility="visible"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_navigation_main"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="?android:attr/windowBackground"
+        app:itemIconTint="@color/bottom_nav_item_color_selector"
+        app:itemTextColor="@color/bottom_nav_item_color_selector"
+        app:labelVisibilityMode="labeled"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:menu="@menu/bottom_navigation_menu" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

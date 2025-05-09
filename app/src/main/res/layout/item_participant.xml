@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardBackgroundColor="@color/event_hub_card_background_detail"
+    app:cardElevation="2dp"
+    app:cardUseCompatPadding="true"
+    app:cardCornerRadius="8dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp">
+
+        <TextView
+            android:id="@+id/tv_participant_avatar"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/avatar_background_shape"
+            android:gravity="center"
+            android:text="A"
+            android:textColor="@color/event_hub_avatar_text_color_detail"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tv_participant_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="8dp"
+            android:text="Osoba Uczestnicząca"
+            android:textAppearance="?attr/textAppearanceListItem"
+            android:textColor="@color/event_hub_text_primary_detail"
+            android:textSize="16sp"
+            app:layout_constraintBottom_toBottomOf="@id/tv_participant_avatar"
+            app:layout_constraintEnd_toStartOf="@+id/btn_remove_participant"
+            app:layout_constraintStart_toEndOf="@id/tv_participant_avatar"
+            app:layout_constraintTop_toTopOf="@id/tv_participant_avatar" />
+
+        <ImageButton
+            android:id="@+id/btn_remove_participant"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Usuń uczestnika"
+            android:src="@drawable/ic_remove_participant"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/event_hub_remove_icon_tint_detail" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>

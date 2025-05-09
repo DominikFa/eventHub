@@ -1,8 +1,8 @@
-package com.example.event_hub.ViewModel;
+package com.example.event_hub.ViewModel; // Corrected package name in thought process, should be ViewModel
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
-import androidx.lifecycle.MutableLiveData;
+// import androidx.lifecycle.MutableLiveData; // Not directly used for new states here
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModel;
 
@@ -10,105 +10,83 @@ import com.example.event_hub.Model.EventHubRepository;
 import com.example.event_hub.Model.EventModel;
 import com.example.event_hub.Model.UserModel;
 import com.example.event_hub.Model.MediaModel;
-import com.example.event_hub.Model.ResultWrapper; // Ensure this import path is correct
+import com.example.event_hub.Model.ResultWrapper; // Corrected import path
 
 import java.util.List;
 
 public class EventDetailViewModel extends ViewModel {
 
     private final EventHubRepository eventHubRepository;
-
-    // Child ViewModels for managing related data.
-    // These would ideally be injected or provided by a ViewModelProvider.Factory.
-    // For this example, we'll instantiate them directly, assuming no complex constructor args for them.
-    private final ParticipantViewModel participantViewModel;
-    private final MediaViewModel mediaViewModel;
+    public final ParticipantViewModel participantViewModel; // Made public for easier access from fragment if needed
+    public final MediaViewModel mediaViewModel; // Made public
 
     private String currentEventId;
 
-    // LiveData for the main event details
     private final MediatorLiveData<ResultWrapper<EventModel>> _eventDetailState = new MediatorLiveData<>();
     public LiveData<ResultWrapper<EventModel>> eventDetailState = _eventDetailState;
 
-    // Expose LiveData from child ViewModels
     public LiveData<ResultWrapper<List<UserModel>>> participantsState;
     public LiveData<ResultWrapper<List<MediaModel>>> mediaListState;
-    public LiveData<ResultWrapper<Void>> participantActionStatus; // From ParticipantViewModel
-    public LiveData<ResultWrapper<MediaModel>> mediaUploadOperationState; // From MediaViewModel
-    public LiveData<ResultWrapper<Void>> mediaDeleteOperationState; // From MediaViewModel
-    public LiveData<ResultWrapper<Void>> joinEventOperationState; // For join/leave actions on this event
+    public LiveData<ResultWrapper<Void>> participantActionStatus;
+    public LiveData<ResultWrapper<MediaModel>> mediaUploadOperationState;
+    public LiveData<ResultWrapper<Void>> mediaDeleteOperationState;
+    public LiveData<ResultWrapper<Void>> eventActionState; // Renamed from joinEventOperationState for join/leave
 
 
     public EventDetailViewModel() {
         this.eventHubRepository = EventHubRepository.getInstance();
-
-        // Initialize child ViewModels
-        // In a real app with Hilt or a ViewModelFactory, these would be injected.
-        this.participantViewModel = new ParticipantViewModel();
+        this.participantViewModel = new ParticipantViewModel(); // Instantiating child VMs
         this.mediaViewModel = new MediaViewModel();
 
-        // Expose LiveData from child ViewModels
         this.participantsState = participantViewModel.participantsState;
         this.mediaListState = mediaViewModel.mediaListState;
         this.participantActionStatus = participantViewModel.participantActionStatus;
         this.mediaUploadOperationState = mediaViewModel.mediaUploadOperationState;
-        this.mediaDeleteOperationState = mediaViewModel.mediaDeleteOperationState; // Assuming this exists on MediaVM
 
-        // Observe the repository's state for a single event operation (used by fetchEventDetails)
+        // Assuming media delete also uses the generic voidOperationState from repo,
+        // if MediaViewModel doesn't have its own specific one.
+        // If MediaViewModel is updated to have its own, point to that.
+        this.mediaDeleteOperationState = eventHubRepository.voidOperationState; // Or mediaViewModel.deleteActionState
+
         _eventDetailState.addSource(eventHubRepository.singleEventOperationState, eventModelResultWrapper -> {
             if (eventModelResultWrapper instanceof ResultWrapper.Success) {
                 EventModel event = ((ResultWrapper.Success<EventModel>) eventModelResultWrapper).getData();
-                // Ensure this update is for the event this ViewModel is currently focused on.
                 if (event != null && event.getId().equals(currentEventId)) {
                     _eventDetailState.setValue(eventModelResultWrapper);
-                } else if (event == null && !(eventModelResultWrapper instanceof ResultWrapper.Loading)) {
-                    // If data is null and not loading, could be an error or irrelevant update.
                 }
-            } else { // Pass through Loading or Error states
+            } else {
                 _eventDetailState.setValue(eventModelResultWrapper);
             }
         });
 
-        // LiveData for join/leave actions specifically for the event being detailed
-        this.joinEventOperationState = eventHubRepository.voidOperationState;
+        this.eventActionState = eventHubRepository.voidOperationState;
     }
 
-    /**
-     * Loads all necessary data for the event detail screen.
-     * @param eventId The ID of the event to load.
-     */
     public void loadEventAllDetails(String eventId) {
         if (eventId == null || eventId.isEmpty()) {
             _eventDetailState.setValue(new ResultWrapper.Error<>("Event ID is missing."));
-            // Also set error states for participant and media lists if desired
-            participantViewModel.loadParticipants(null); // Will set its own error state
-            mediaViewModel.loadMediaForEvent(null);   // Will set its own error state
+            participantViewModel.loadParticipants(null);
+            mediaViewModel.loadMediaForEvent(null);
             return;
         }
         this.currentEventId = eventId;
 
-        // 1. Load main event details
         _eventDetailState.setValue(new ResultWrapper.Loading<>());
         System.out.println("EventDetailViewModel: Loading details for eventId: " + eventId);
         eventHubRepository.fetchEventDetails(eventId);
 
-        // 2. Load participants for this event using ParticipantViewModel
         System.out.println("EventDetailViewModel: Triggering participant load for eventId: " + eventId);
         participantViewModel.loadParticipants(eventId);
 
-        // 3. Load media for this event using MediaViewModel
         System.out.println("EventDetailViewModel: Triggering media load for eventId: " + eventId);
         mediaViewModel.loadMediaForEvent(eventId);
     }
 
-    /**
-     * Allows the current user to join the event being detailed.
-     * @param userId The ID of the user joining the event.
-     */
     public void joinCurrentEvent(String userId) {
         if (currentEventId == null || currentEventId.isEmpty()) {
             System.err.println("EventDetailViewModel: Cannot join event, event ID not set.");
-            // Optionally update joinEventOperationState with an error
+            // Update eventActionState with error if needed, though repo will also do it.
+            // ((MutableLiveData<ResultWrapper<Void>>)eventActionState).setValue(new ResultWrapper.Error<>("Event ID not set"));
             return;
         }
         if (userId == null || userId.isEmpty()) {
@@ -117,40 +95,66 @@ public class EventDetailViewModel extends ViewModel {
         }
         System.out.println("EventDetailViewModel: User " + userId + " attempting to join event " + currentEventId);
         eventHubRepository.joinPublicEvent(currentEventId, userId);
-        // After join, participant list might need refresh.
-        // The repo's joinPublicEvent doesn't auto-refresh participant list.
-        // So, after successful join, we might need to trigger:
-        // participantViewModel.loadParticipants(currentEventId);
-        // This can be done by observing joinEventOperationState for success.
+        // Participant list will refresh due to repo's fetchEventParticipants call in joinPublicEvent
     }
 
+    /**
+     * Allows the current user to leave the event being detailed.
+     * @param userId The ID of the user leaving the event.
+     */
+    public void leaveCurrentEvent(String userId) {
+        if (currentEventId == null || currentEventId.isEmpty()) {
+            System.err.println("EventDetailViewModel: Cannot leave event, event ID not set.");
+            // ((MutableLiveData<ResultWrapper<Void>>)eventActionState).setValue(new ResultWrapper.Error<>("Event ID not set"));
+            return;
+        }
+        if (userId == null || userId.isEmpty()) {
+            System.err.println("EventDetailViewModel: Cannot leave event, user ID not set.");
+            return;
+        }
+        System.out.println("EventDetailViewModel: User " + userId + " attempting to leave event " + currentEventId);
+        eventHubRepository.leaveEvent(currentEventId, userId);
+        // Participant list will refresh due to repo's fetchEventParticipants call in leaveEvent
+    }
 
-    // --- Delegate methods to child ViewModels (or UI can access them directly) ---
-
+    // --- Delegate methods to child ViewModels ---
     public void deleteParticipant(String participantAccountId) {
-        if (currentEventId == null) return;
-        participantViewModel.deleteParticipant(currentEventId, participantAccountId);
+        if (currentEventId == null) {
+            System.err.println("EventDetailViewModel: Cannot delete participant, event ID not set.");
+            return;
+        }
+        // ParticipantViewModel's deleteParticipant takes eventId and participantAccountId
+        // However, our ParticipantViewModel's deleteParticipant method was simplified.
+        // Let's assume it knows its currentEventId context or we pass it.
+        // For now, directly calling repo for simplicity as child VM might not have eventId context easily.
+        // Or, ensure child VMs are initialized with eventId.
+        // participantViewModel.deleteParticipant(currentEventId, participantAccountId);
+        // For this refactor, let's assume EventDetailViewModel handles actions requiring eventId directly or via specific methods.
+        eventHubRepository.deleteParticipant(currentEventId, participantAccountId); // Example direct call
     }
 
     public void viewParticipantProfile(String participantAccountId) {
-        participantViewModel.viewParticipantProfile(participantAccountId);
+        participantViewModel.viewParticipantProfile(participantAccountId); // This just triggers navigation
     }
 
     public void uploadMediaToCurrentEvent(MediaModel mediaToUpload) {
         if (currentEventId == null) {
             System.err.println("EventDetailViewModel: Event context not set for media upload.");
-            // Update mediaUploadOperationState with an error if it's used for pre-validation
-            // This requires MediaViewModel to expose a way to set such an error, or this VM uses its own status.
             return;
         }
-        // mediaViewModel will use its currentObservingEventId, which should be set by loadEventAllDetails
+        mediaToUpload.setEventId(currentEventId); // Ensure eventId is set on the model
         mediaViewModel.uploadMedia(mediaToUpload);
     }
 
     public void deleteMediaFromCurrentEvent(String mediaId) {
-        if (currentEventId == null) return;
-        // mediaViewModel will use its currentObservingEventId
-        mediaViewModel.deleteMedia(mediaId);
+        if (currentEventId == null) {
+            System.err.println("EventDetailViewModel: Event context not set for media deletion.");
+            return;
+        }
+        mediaViewModel.deleteMedia(mediaId); // MediaViewModel's deleteMedia needs to know eventId for refresh
+        // The current MediaViewModel.deleteMedia takes mediaId only
+        // and relies on its currentObservingEventIdForMedia.
+        // This should be fine if loadMediaForEvent was called.
     }
 
     public LiveData<String> getNavigateToParticipantProfileId() {
@@ -162,10 +166,10 @@ public class EventDetailViewModel extends ViewModel {
     protected void onCleared() {
         super.onCleared();
         _eventDetailState.removeSource(eventHubRepository.singleEventOperationState);
-        // Child ViewModels will handle their own onCleared if they are true Android ViewModels
-        // and managed by a ViewModelProvider. If instantiated directly like here,
-        // their onCleared might not be called automatically unless this VM calls them.
-        // For simplicity, we assume they manage their observers.
+        // Child ViewModels' onCleared will be called if they are AndroidX ViewModels
+        // and managed by a ViewModelProvider with the correct scope.
+        participantViewModel.onCleared(); // Manually call if not managed by provider with this VM
+        mediaViewModel.onCleared();       // Manually call
         System.out.println("EventDetailViewModel: Cleared.");
     }
 }

@@ -48,5 +48,12 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.9.0") // Use the same version as core
     implementation("com.squareup.okhttp3:okhttp:4.10.0") // Use a recent compatible version
     implementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
+    implementation("androidx.navigation:navigation-fragment:2.7.7")
+    implementation("androidx.navigation:navigation-ui:2.7.7")
+    implementation("androidx.navigation:navigation-fragment-ktx:2.7.5")
+    implementation("androidx.navigation:navigation-ui-ktx:2.7.5")
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
 
 }

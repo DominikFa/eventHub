@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/navigation_events_known"
+        android:icon="@drawable/ic_event_check"
+        android:title="Znam" />
+    <item
+        android:id="@+id/navigation_events_public"
+        android:icon="@drawable/ic_public_events"
+        android:title="Publiczne" />
+    <item
+        android:id="@+id/navigation_create_event"
+        android:icon="@drawable/ic_add_event"
+        android:title="Utwórz" />
+</menu>

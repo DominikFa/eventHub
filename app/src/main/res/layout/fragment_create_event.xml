@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/event_hub_main_background_create"
+    tools:context="com.example.event_hub.View.CreateEventFragment">
+
+    <TextView
+        android:id="@+id/tv_app_title_create_event"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="24dp"
+        android:fontFamily="@font/jaro_custom"
+        android:text="EventHub"
+        android:textColor="@android:color/white"
+        android:textSize="48sp"
+        app:layout_constraintEnd_toStartOf="@+id/iv_user_icon_create_event"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/iv_user_icon_create_event"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginEnd="24dp"
+        android:src="@drawable/ic_profile"
+        android:contentDescription="@string/content_desc_user_profile"
+        app:tint="@android:color/white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/tv_app_title_create_event"
+        app:layout_constraintBottom_toBottomOf="@id/tv_app_title_create_event" />
+
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/rounded_top_corners_background_create"
+        app:layout_constraintBottom_toTopOf="@+id/btn_create_event_submit"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_app_title_create_event"
+        android:fillViewport="true">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/tv_create_event_screen_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:fontFamily="@font/jaro_custom"
+                android:text="Utwórz wydarzenie"
+                android:textColor="@android:color/white"
+                android:textSize="40sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_select_event_date"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="Wybierz datę rozpoczęcia"
+                android:textColor="@color/event_hub_text_primary_create"
+                app:icon="@drawable/ic_calendar"
+                app:iconTint="@color/event_hub_text_primary_create"
+                app:strokeColor="@color/event_hub_text_primary_create"
+                app:cornerRadius="20dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tv_create_event_screen_title" />
+
+            <TextView
+                android:id="@+id/tv_selected_event_start_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="@color/event_hub_text_secondary_create"
+                android:textSize="16sp"
+                tools:text="Wybrana data: 25 Maj, 2025"
+                app:layout_constraintStart_toStartOf="@id/btn_select_event_date"
+                app:layout_constraintTop_toBottomOf="@id/btn_select_event_date"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_select_event_time"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Wybierz godzinę rozpoczęcia"
+                android:textColor="@color/event_hub_text_primary_create"
+                app:icon="@drawable/ic_time"
+                app:iconTint="@color/event_hub_text_primary_create"
+                app:strokeColor="@color/event_hub_text_primary_create"
+                app:cornerRadius="20dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tv_selected_event_start_date" />
+
+            <TextView
+                android:id="@+id/tv_selected_event_start_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="@color/event_hub_text_secondary_create"
+                android:textSize="16sp"
+                tools:text="Wybrana godzina: 20:00"
+                app:layout_constraintStart_toStartOf="@id/btn_select_event_time"
+                app:layout_constraintTop_toBottomOf="@id/btn_select_event_time"/>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/til_event_name_create"
+                style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:hint="Nazwa wydarzenia"
+                app:boxBackgroundColor="@color/event_hub_text_field_background_create"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp"
+                app:hintTextColor="@color/event_hub_text_field_hint_create"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tv_selected_event_start_time">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_event_name_create"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textCapSentences"
+                    android:textColor="@color/event_hub_text_input_create"
+                    android:textSize="18sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/til_event_description_create"
+                style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:hint="Opis wydarzenia"
+                app:boxBackgroundColor="@color/event_hub_text_field_background_create"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp"
+                app:hintTextColor="@color/event_hub_text_field_hint_create"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/til_event_name_create">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_event_description_create"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="top"
+                    android:inputType="textMultiLine|textCapSentences"
+                    android:minLines="3"
+                    android:maxLines="6"
+                    android:textColor="@color/event_hub_text_input_create"
+                    android:textSize="16sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_add_event_photos"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Dodaj zdjęcia"
+                android:textColor="@color/event_hub_purple_primary_main"
+                app:icon="@drawable/ic_add_photo"
+                app:iconTint="@color/event_hub_purple_primary_main"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/til_event_description_create"/>
+
+            <ProgressBar
+                android:id="@+id/pb_create_event_loading"
+                style="?android:attr/progressBarStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:visibility="gone"
+                app:layout_constraintTop_toBottomOf="@id/btn_add_event_photos"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                tools:visibility="visible"/>
+
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_create_event_submit"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/button_purple_gradient_rectangular"
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp"
+        android:text="Utwórz"
+        android:textAllCaps="false"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        app:cornerRadius="25dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

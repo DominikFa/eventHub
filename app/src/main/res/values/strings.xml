@@ -6,41 +6,83 @@
     <string name="second_fragment_label">Second Fragment</string>
     <string name="next">Next</string>
     <string name="previous">Previous</string>
+    <string name="content_desc_profile">User Profile</string>
+    <string name="content_desc_login">Login</string>
+    <string name="error_loading_event">Error loading event details</string>
+    <string name="no_participants_event_detail">Brak zapisanych uczestników.</string>
+    <string name="error_loading_participants">Błąd ładowania uczestników.</string>
+    <string name="no_photos_event_detail">Brak zdjęć dla tego wydarzenia.</string>
+    <string name="error_loading_photos">Błąd ładowania zdjęć.</string>
+    <string name="processing_button_text">Przetwarzanie...</string>
+    <string name="action_successful_toast">Akcja wykonana pomyślnie!</string>
+    <string name="action_failed_toast_prefix">Akcja nie powiodła się: </string>
+    <string name="participant_action_successful_toast">Akcja uczestnika wykonana pomyślnie</string>
+    <string name="participant_action_failed_toast_prefix">Akcja uczestnika nie powiodła się: </string>
+    <string name="not_available_placeholder">N/A</string>
+    <string name="leave_event_button">Opuść wydarzenie</string>
+    <string name="join_event_button">Dołącz do wydarzenia</string>
+    <string name="dialog_title_remove_participant">Remove Participant</string>
+    <string name="dialog_message_remove_participant_confirm">Are you sure you want to remove %1$s?</string>
+    <string name="dialog_button_remove">Remove</string>
+    <string name="dialog_button_cancel">Cancel</string>
+    <string name="error_event_id_not_found">Error: Event ID not found.</string>
+    <string name="navigate_to_directions_toast">Navigate to Directions for: %1$s</string>
+    <string name="location_not_available_toast">Location not available.</string>
+    <string name="invite_users_clicked_toast">Invite Users clicked</string>
+    <string name="navigate_to_profile_toast">Navigate to Profile</string>
+    <string name="navigate_to_login_toast">Navigate to Login</string>
+    <string name="login_required_to_join_leave_toast">Please login to join or leave events.</string>
+    <string name="error_loading_event_details_toast_prefix">Error loading event details: </string>
+    <string name="event_date_range_format">%1$s - %2$s</string>
+    <string name="no_public_events_available">No public events available at the moment.</string>
+    <string name="error_loading_events_prefix">Error loading events: </string>
+    <string name="no_attended_events_found">You are not attending any events yet.</string>
+    <string name="error_loading_attended_events_prefix">Error loading your events: </string>
+    <string name="login_to_see_attended_events">Please login to see your events.</string>
+    <string name="login_to_see_attended_events_detail">Login to view events you are attending or have shown interest in.</string>
+    <string name="content_desc_user_profile">User Profile</string>
+    <string name="selected_date_prefix">Wybrana data: </string>
+    <string name="selected_time_prefix">Wybrana godzina: </string>
+    <string name="profile_title">Mój Profil</string>
+    <string name="content_desc_profile_avatar">Profile Avatar</string>
+    <string name="profile_label_username">Login:</string>
+    <string name="profile_label_email">Email:</string>
+    <string name="profile_label_bio">O mnie:</string>
+    <string name="profile_label_role">Rola:</string>
+    <string name="profile_label_status">Status:</string>
+    <string name="profile_button_edit_profile">Edytuj Profil</string>
+    <string name="profile_button_logout">Wyloguj</string>
+    <string name="profile_button_ban_user">Zbanuj Użytkownika</string>
+    <string name="profile_button_delete_account">Usuń Konto</string>
+    <string name="dialog_title_logout_confirm">Potwierdź Wylogowanie</string>
+    <string name="dialog_message_logout_confirm">Czy na pewno chcesz się wylogować?</string>
+    <string name="dialog_button_logout">Wyloguj</string>
+    <string name="dialog_button_ban">Zbanuj</string>
+    <string name="dialog_button_delete">Usuń</string>
+    <string name="dialog_title_ban_confirm">Potwierdź Zbanowanie</string>
+    <string name="dialog_message_ban_confirm">Czy na pewno chcesz zbanować tego użytkownika?</string>
+    <string name="dialog_title_delete_confirm">Potwierdź Usunięcie Konta</string>
+    <string name="dialog_message_delete_confirm">UWAGA: Ta akcja jest nieodwracalna. Czy na pewno chcesz usunąć to konto?</string>
+    <string name="profile_loading_error">Nie udało się załadować profilu.</string>
+    <string name="action_logout_successful">Wylogowano pomyślnie.</string>
+    <string name="action_logout_failed">Wylogowanie nie powiodło się.</string>
+    <string name="action_ban_successful">Użytkownik zbanowany.</string>
+    <string name="action_ban_failed">Błąd podczas banowania użytkownika.</string>
+    <string name="action_delete_successful">Konto usunięte.</string>
+    <string name="action_delete_failed">Błąd podczas usuwania konta.</string>
+    <string name="invite_users_title">Zaproś Użytkowników</string>
+    <string name="search_users_hint">Szukaj użytkowników po loginie/emailu...</string>
+    <string name="no_users_found_for_invite">Nie znaleziono użytkowników. Spróbuj wyszukać.</string>
+    <string name="content_desc_user_avatar">User Avatar</string>
+    <string name="invitations_sent_success">Zaproszenia wysłane pomyślnie!</string>
+    <string name="invitations_sent_failed">Nie udało się wysłać zaproszeń: %1$s</string>
+    <string name="no_users_selected_for_invite">Nie wybrano żadnych użytkowników do zaproszenia.</string>
+    <string name="search_to_find_users_for_invite">Wyszukaj użytkowników, aby ich zaprosić.</string> <string name="send_invitations_button">Wyślij Zaproszenia</string>
+    <string name="content_desc_login_or_profile">Login or Profile</string>
+    <string name="select_date_button">Wybierz datę</string>
+    <string name="no_events_found_for_date">Nie znaleziono wydarzeń dla wybranej daty.</string>
+    <string name="dialog_message_ban_confirm_user">Czy na pewno chcesz zbanować użytkownika %1$s?</string>
+    <string name="dialog_message_delete_confirm_user">UWAGA: Ta akcja jest nieodwracalna. Czy na pewno chcesz usunąć konto %1$s?</string>
+    <string name="open_in_maps_app_button">Otwórz w aplikacji Mapy</string>
 
-    <string name="lorem_ipsum">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam in scelerisque sem. Mauris
-        volutpat, dolor id interdum ullamcorper, risus dolor egestas lectus, sit amet mattis purus
-        dui nec risus. Maecenas non sodales nisi, vel dictum dolor. Class aptent taciti sociosqu ad
-        litora torquent per conubia nostra, per inceptos himenaeos. Suspendisse blandit eleifend
-        diam, vel rutrum tellus vulputate quis. Aliquam eget libero aliquet, imperdiet nisl a,
-        ornare ex. Sed rhoncus est ut libero porta lobortis. Fusce in dictum tellus.\n\n
-        Suspendisse interdum ornare ante. Aliquam nec cursus lorem. Morbi id magna felis. Vivamus
-        egestas, est a condimentum egestas, turpis nisl iaculis ipsum, in dictum tellus dolor sed
-        neque. Morbi tellus erat, dapibus ut sem a, iaculis tincidunt dui. Interdum et malesuada
-        fames ac ante ipsum primis in faucibus. Curabitur et eros porttitor, ultricies urna vitae,
-        molestie nibh. Phasellus at commodo eros, non aliquet metus. Sed maximus nisl nec dolor
-        bibendum, vel congue leo egestas.\n\n
-        Sed interdum tortor nibh, in sagittis risus mollis quis. Curabitur mi odio, condimentum sit
-        amet auctor at, mollis non turpis. Nullam pretium libero vestibulum, finibus orci vel,
-        molestie quam. Fusce blandit tincidunt nulla, quis sollicitudin libero facilisis et. Integer
-        interdum nunc ligula, et fermentum metus hendrerit id. Vestibulum lectus felis, dictum at
-        lacinia sit amet, tristique id quam. Cras eu consequat dui. Suspendisse sodales nunc ligula,
-        in lobortis sem porta sed. Integer id ultrices magna, in luctus elit. Sed a pellentesque
-        est.\n\n
-        Aenean nunc velit, lacinia sed dolor sed, ultrices viverra nulla. Etiam a venenatis nibh.
-        Morbi laoreet, tortor sed facilisis varius, nibh orci rhoncus nulla, id elementum leo dui
-        non lorem. Nam mollis ipsum quis auctor varius. Quisque elementum eu libero sed commodo. In
-        eros nisl, imperdiet vel imperdiet et, scelerisque a mauris. Pellentesque varius ex nunc,
-        quis imperdiet eros placerat ac. Duis finibus orci et est auctor tincidunt. Sed non viverra
-        ipsum. Nunc quis augue egestas, cursus lorem at, molestie sem. Morbi a consectetur ipsum, a
-        placerat diam. Etiam vulputate dignissim convallis. Integer faucibus mauris sit amet finibus
-        convallis.\n\n
-        Phasellus in aliquet mi. Pellentesque habitant morbi tristique senectus et netus et
-        malesuada fames ac turpis egestas. In volutpat arcu ut felis sagittis, in finibus massa
-        gravida. Pellentesque id tellus orci. Integer dictum, lorem sed efficitur ullamcorper,
-        libero justo consectetur ipsum, in mollis nisl ex sed nisl. Donec maximus ullamcorper
-        sodales. Praesent bibendum rhoncus tellus nec feugiat. In a ornare nulla. Donec rhoncus
-        libero vel nunc consequat, quis tincidunt nisl eleifend. Cras bibendum enim a justo luctus
-        vestibulum. Fusce dictum libero quis erat maximus, vitae volutpat diam dignissim.
-    </string>
 </resources>

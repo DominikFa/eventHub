@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/event_hub_main_background_detail"
+    tools:context="com.example.event_hub.View.EventDetailFragment">
+
+    <TextView
+        android:id="@+id/tv_app_title_event_detail"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="24dp"
+        android:fontFamily="@font/jaro_custom"
+        android:text="EventHub"
+        android:textColor="@android:color/white"
+        android:textSize="48sp"
+        app:layout_constraintEnd_toStartOf="@+id/iv_user_icon_event_detail"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/iv_user_icon_event_detail"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginEnd="24dp"
+        android:src="@drawable/ic_profile"
+        android:contentDescription="User Profile"
+        app:tint="@android:color/white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/tv_app_title_event_detail"
+        app:layout_constraintBottom_toBottomOf="@id/tv_app_title_event_detail" />
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/nsv_event_detail_content_area"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/rounded_top_corners_background_detail"
+        app:layout_constraintBottom_toTopOf="@+id/ll_bottom_buttons_event_detail"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_app_title_event_detail"
+        android:fillViewport="true">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="24dp">
+
+            <ProgressBar
+                android:id="@+id/pb_event_details_loading"
+                style="?android:attr/progressBarStyleLarge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                tools:visibility="visible"/>
+
+            <TextView
+                android:id="@+id/tv_event_screen_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:fontFamily="@font/jaro_custom"
+                android:text="Wydarzenie"
+                android:textColor="@android:color/white"
+                android:textSize="40sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cv_event_info"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="16dp"
+                app:cardBackgroundColor="@color/event_hub_card_background_detail"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tv_event_screen_title">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/tv_event_name_detail"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:textAppearance="?attr/textAppearanceHeadline5"
+                        android:textColor="@color/event_hub_text_primary_detail"
+                        tools:text="Super Konferencja Technologiczna" />
+
+                    <TextView
+                        android:id="@+id/tv_event_description_detail"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center"
+                        android:textAppearance="?attr/textAppearanceBody1"
+                        android:textColor="@color/event_hub_text_secondary_detail"
+                        tools:text="Szczegółowy opis wydarzenia pojawi się tutaj." />
+
+                    <TextView
+                        android:id="@+id/tv_event_date_time_detail"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:gravity="center"
+                        android:textColor="@color/event_hub_text_meta_detail"
+                        android:textSize="14sp"
+                        app:drawableStartCompat="@drawable/ic_event_date"
+                        android:drawablePadding="8dp"
+                        tools:text="25 Maj 2025, 10:00 - 18:00"/>
+
+                    <TextView
+                        android:id="@+id/tv_event_location_detail"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center"
+                        android:textColor="@color/event_hub_text_meta_detail"
+                        android:textSize="14sp"
+                        app:drawableStartCompat="@drawable/ic_location"
+                        android:drawablePadding="8dp"
+                        tools:text="Centrum Konferencyjne, Warszawa"/>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:id="@+id/tv_photos_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="Zdjęcia z wydarzenia"
+                android:textAppearance="?attr/textAppearanceHeadline6"
+                android:textColor="@color/event_hub_section_title_detail"
+                app:layout_constraintStart_toStartOf="@id/cv_event_info"
+                app:layout_constraintTop_toBottomOf="@id/cv_event_info" />
+
+            <ProgressBar
+                android:id="@+id/pb_photos_loading"
+                style="?android:attr/progressBarStyleSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:visibility="gone"
+                app:layout_constraintTop_toBottomOf="@id/tv_photos_title"
+                app:layout_constraintStart_toStartOf="@id/tv_photos_title"
+                app:layout_constraintEnd_toEndOf="@id/tv_photos_title"
+                tools:visibility="visible"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_event_photos"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:minHeight="120dp"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal"
+                android:background="@color/event_hub_photos_bg_detail"
+                android:padding="8dp"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                app:layout_constraintEnd_toEndOf="@id/cv_event_info"
+                app:layout_constraintStart_toStartOf="@id/cv_event_info"
+                app:layout_constraintTop_toBottomOf="@id/tv_photos_title"
+                tools:listitem="@layout/item_event_photo"
+                tools:itemCount="3"/>
+
+            <TextView
+                android:id="@+id/tv_no_photos_detail"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Brak zdjęć dla tego wydarzenia."
+                android:gravity="center"
+                android:textColor="@android:color/darker_gray"
+                android:visibility="gone"
+                android:layout_marginTop="8dp"
+                app:layout_constraintTop_toBottomOf="@id/tv_photos_title"
+                app:layout_constraintStart_toStartOf="@id/rv_event_photos"
+                app:layout_constraintEnd_toEndOf="@id/rv_event_photos"
+                app:layout_constraintBottom_toBottomOf="@id/rv_event_photos"
+                tools:visibility="visible"/>
+
+
+            <TextView
+                android:id="@+id/tv_participants_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="Lista uczestników"
+                android:textAppearance="?attr/textAppearanceHeadline6"
+                android:textColor="@color/event_hub_section_title_detail"
+                app:layout_constraintStart_toStartOf="@id/cv_event_info"
+                app:layout_constraintTop_toBottomOf="@id/rv_event_photos" />
+
+            <ProgressBar
+                android:id="@+id/pb_participants_loading"
+                style="?android:attr/progressBarStyleSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:visibility="gone"
+                app:layout_constraintTop_toBottomOf="@id/tv_participants_title"
+                app:layout_constraintStart_toStartOf="@id/tv_participants_title"
+                app:layout_constraintEnd_toEndOf="@id/tv_participants_title"
+                tools:visibility="visible"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_event_participants"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:minHeight="150dp"
+                android:layout_marginTop="8dp"
+                android:nestedScrollingEnabled="false"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                app:layout_constraintEnd_toEndOf="@id/cv_event_info"
+                app:layout_constraintStart_toStartOf="@id/cv_event_info"
+                app:layout_constraintTop_toBottomOf="@id/tv_participants_title"
+                tools:listitem="@layout/item_participant"
+                tools:itemCount="2"/>
+
+            <TextView
+                android:id="@+id/tv_no_participants_detail"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Brak zapisanych uczestników."
+                android:gravity="center"
+                android:textColor="@android:color/darker_gray"
+                android:visibility="gone"
+                android:layout_marginTop="8dp"
+                app:layout_constraintTop_toBottomOf="@id/tv_participants_title"
+                app:layout_constraintStart_toStartOf="@id/rv_event_participants"
+                app:layout_constraintEnd_toEndOf="@id/rv_event_participants"
+                app:layout_constraintBottom_toBottomOf="@id/rv_event_participants"
+                tools:visibility="visible"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <LinearLayout
+        android:id="@+id/ll_bottom_buttons_event_detail"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:background="@color/event_hub_main_background_detail"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_join_leave_event_detail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/button_purple_gradient_rectangular"
+            android:text="Dołącz do wydarzenia"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            app:cornerRadius="25dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp"
+            android:layout_marginBottom="8dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_get_directions_detail"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/button_purple_gradient_rectangular"
+                android:text="Jak dojechać"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                app:cornerRadius="25dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_invite_detail"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/button_purple_gradient_rectangular"
+                android:text="Zaproś"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                app:cornerRadius="25dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp"/>
+        </LinearLayout>
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
