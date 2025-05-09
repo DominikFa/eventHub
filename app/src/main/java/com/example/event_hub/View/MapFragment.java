@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.location.Address;
 import android.location.Geocoder;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,6 +32,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.button.MaterialButton;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Locale;
 
@@ -58,9 +60,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         mapViewModel = new ViewModelProvider(this).get(MapViewModel.class);
 
         if (getArguments() != null) {
-            // If using Safe Args:
-            // eventIdArg = MapFragmentArgs.fromBundle(getArguments()).getEventId();
-            // eventLocationArg = MapFragmentArgs.fromBundle(getArguments()).getEventLocation();
             eventIdArg = getArguments().getString("eventId");
             eventLocationArg = getArguments().getString("eventLocation");
         }
@@ -79,28 +78,23 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         pbMapLoading = view.findViewById(R.id.pb_map_loading);
         tvMapErrorOrInfo = view.findViewById(R.id.tv_map_error_or_info);
         btnOpenInMapsApp = view.findViewById(R.id.btn_open_in_maps_app);
-        btnOpenInMapsApp.setEnabled(false); // Disable until location is ready
+        btnOpenInMapsApp.setEnabled(false);
 
-        // Initialize the SupportMapFragment
         mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map_container);
         if (mapFragment == null) {
-            // Handle error: mapFragment not found
             tvMapErrorOrInfo.setText("Error initializing map.");
             tvMapErrorOrInfo.setVisibility(View.VISIBLE);
             return;
         }
-        mapFragment.getMapAsync(this); // Triggers onMapReady
+        mapFragment.getMapAsync(this);
 
         setupClickListeners();
         observeViewModel();
 
         if (eventLocationArg != null && !eventLocationArg.isEmpty()) {
-            // If EventModel.location (passed as eventLocationArg) is already "lat,lng" or address
-            mapViewModel.loadLocationFromString(eventLocationArg, "Event Location"); // Pass a title if available
+            mapViewModel.loadLocationFromString(eventLocationArg, "Event Location");
         } else if (eventIdArg != null) {
-            // TODO: If only eventId is passed, MapViewModel needs to fetch event details
-            // mapViewModel.fetchEventLocationById(eventIdArg);
-            tvMapErrorOrInfo.setText("Fetching event location by ID not yet implemented.");
+            tvMapErrorOrInfo.setText("Fetching event location by ID not yet implemented in ViewModel.");
             tvMapErrorOrInfo.setVisibility(View.VISIBLE);
         } else {
             tvMapErrorOrInfo.setText("No location information provided.");
@@ -115,10 +109,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private void observeViewModel() {
         mapViewModel.locationDataState.observe(getViewLifecycleOwner(), result -> {
             handleVisibility(pbMapLoading, result instanceof ResultWrapper.Loading);
-            tvMapErrorOrInfo.setVisibility(View.GONE); // Hide error by default
+            tvMapErrorOrInfo.setVisibility(View.GONE);
 
             if (result instanceof ResultWrapper.Success) {
-                @SuppressWarnings("unchecked")
                 LocationData locationData = ((ResultWrapper.Success<LocationData>) result).getData();
                 if (locationData != null) {
                     this.currentLocationData = locationData;
@@ -132,7 +125,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                     btnOpenInMapsApp.setEnabled(false);
                 }
             } else if (result instanceof ResultWrapper.Error) {
-                @SuppressWarnings("unchecked")
                 String error = ((ResultWrapper.Error<LocationData>) result).getMessage();
                 tvMapErrorOrInfo.setText("Error: " + error);
                 tvMapErrorOrInfo.setVisibility(View.VISIBLE);
@@ -145,14 +137,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         this.googleMap = googleMap;
-        // Configure map settings if needed (e.g., UI controls, map type)
-        // googleMap.getUiSettings().setZoomControlsEnabled(true);
-
-        // If locationData was already loaded by ViewModel before map was ready, update map now
         if (currentLocationData != null) {
             updateMapLocation(currentLocationData);
         } else {
-            // Show a default location or wait for ViewModel to provide data
             LatLng defaultLocation = new LatLng(52.2297, 21.0122); // Warsaw
             googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 6));
         }
@@ -163,90 +150,65 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
         if (locationData.getLatitude() != 0 && locationData.getLongitude() != 0) {
             LatLng position = new LatLng(locationData.getLatitude(), locationData.getLongitude());
-            googleMap.clear(); // Clear previous markers
+            googleMap.clear();
             googleMap.addMarker(new MarkerOptions().position(position).title(locationData.getEventTitle() != null ? locationData.getEventTitle() : "Event Location"));
-            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(position, 15)); // Zoom level 15
+            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(position, 15));
             tvMapErrorOrInfo.setVisibility(View.GONE);
         } else if (locationData.getAddress() != null && !locationData.getAddress().isEmpty()) {
-            // Address needs geocoding
-            geocodeAddressAndShowOnMap(locationData.getAddress(), locationData.getEventTitle());
+            // Address needs geocoding - initiate background task
+            new GeocodeAddressTask(this).execute(locationData.getAddress(), locationData.getEventTitle());
         } else {
             tvMapErrorOrInfo.setText("Insufficient location data to display on map.");
             tvMapErrorOrInfo.setVisibility(View.VISIBLE);
         }
     }
 
-    private void geocodeAddressAndShowOnMap(String addressString, String title) {
-        if (getContext() == null || googleMap == null) return;
-        Geocoder geocoder = new Geocoder(getContext(), Locale.getDefault());
-        handleVisibility(pbMapLoading, true); // Show loading during geocoding
-
-        // Geocoding should be done in a background thread in a real app
-        // For simplicity in this example, it's on the main thread (can cause ANR)
-        // In a real app: use AsyncTask, Coroutines (Kotlin), or RxJava
-        try {
-            List<Address> addresses = geocoder.getFromLocationName(addressString, 1);
-            handleVisibility(pbMapLoading, false);
-            if (addresses != null && !addresses.isEmpty()) {
-                Address location = addresses.get(0);
-                LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-
-                // Update currentLocationData with resolved coordinates
-                if (currentLocationData != null) {
-                    currentLocationData.setLatitude(location.getLatitude());
-                    currentLocationData.setLongitude(location.getLongitude());
-                }
-
-                googleMap.clear();
-                googleMap.addMarker(new MarkerOptions().position(latLng).title(title != null ? title : addressString));
-                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
-                tvMapErrorOrInfo.setVisibility(View.GONE);
-                btnOpenInMapsApp.setEnabled(true);
-            } else {
-                tvMapErrorOrInfo.setText("Could not find location for address: " + addressString);
-                tvMapErrorOrInfo.setVisibility(View.VISIBLE);
-                btnOpenInMapsApp.setEnabled(false);
+    // Called by GeocodeAddressTask onPostExecute
+    private void onGeocodingResult(LatLng latLng, String addressString, String title, String errorMessage) {
+        handleVisibility(pbMapLoading, false);
+        if (latLng != null && googleMap != null) {
+            if (currentLocationData != null && addressString.equals(currentLocationData.getAddress())) {
+                currentLocationData.setLatitude(latLng.latitude);
+                currentLocationData.setLongitude(latLng.longitude);
             }
-        } catch (IOException e) {
-            handleVisibility(pbMapLoading, false);
-            tvMapErrorOrInfo.setText("Geocoding failed: " + e.getMessage());
+            googleMap.clear();
+            googleMap.addMarker(new MarkerOptions().position(latLng).title(title != null ? title : addressString));
+            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
+            tvMapErrorOrInfo.setVisibility(View.GONE);
+            btnOpenInMapsApp.setEnabled(true);
+        } else {
+            tvMapErrorOrInfo.setText(errorMessage != null ? errorMessage : "Could not find location for address: " + addressString);
             tvMapErrorOrInfo.setVisibility(View.VISIBLE);
             btnOpenInMapsApp.setEnabled(false);
-            e.printStackTrace();
         }
     }
+
 
     private void openInExternalMaps() {
         if (currentLocationData == null) {
             Toast.makeText(getContext(), "Location data not available.", Toast.LENGTH_SHORT).show();
             return;
         }
-
         Uri gmmIntentUri;
         if (currentLocationData.getLatitude() != 0 && currentLocationData.getLongitude() != 0) {
-            // Using coordinates
             String titleEncoded = Uri.encode(currentLocationData.getEventTitle() != null ? currentLocationData.getEventTitle() : "Event Location");
             gmmIntentUri = Uri.parse("geo:" + currentLocationData.getLatitude() + "," + currentLocationData.getLongitude() + "?q=" + currentLocationData.getLatitude() + "," + currentLocationData.getLongitude() + "(" + titleEncoded + ")");
         } else if (currentLocationData.getAddress() != null && !currentLocationData.getAddress().isEmpty()) {
-            // Using address string for query
             gmmIntentUri = Uri.parse("geo:0,0?q=" + Uri.encode(currentLocationData.getAddress()));
         } else {
             Toast.makeText(getContext(), "No valid location to open.", Toast.LENGTH_SHORT).show();
             return;
         }
-
         Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
-        mapIntent.setPackage("com.google.android.apps.maps"); // Attempt to open Google Maps directly
-
+        mapIntent.setPackage("com.google.android.apps.maps");
         try {
             startActivity(mapIntent);
         } catch (ActivityNotFoundException e) {
-            // Google Maps app is not installed, try generic intent
             Intent genericMapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
             try {
                 startActivity(genericMapIntent);
             } catch (ActivityNotFoundException ex) {
-                Toast.makeText(getContext(), "No map application found to handle this request.", Toast.LENGTH_LONG).show();
+                Toast.makeText(getContext(), "No map application found.", Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -254,6 +216,72 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private void handleVisibility(View view, boolean isLoading) {
         if (view != null) {
             view.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    // Static inner class for AsyncTask to avoid memory leaks
+    private static class GeocodeAddressTask extends AsyncTask<String, Void, GeocodeAddressTask.GeocodeResult> {
+        private final WeakReference<MapFragment> fragmentReference;
+
+        static class GeocodeResult {
+            LatLng latLng;
+            String addressString; // Original address for context
+            String title;         // Original title for context
+            String errorMessage;
+
+            GeocodeResult(LatLng latLng, String addressString, String title) {
+                this.latLng = latLng;
+                this.addressString = addressString;
+                this.title = title;
+            }
+
+            GeocodeResult(String errorMessage, String addressString, String title) {
+                this.errorMessage = errorMessage;
+                this.addressString = addressString;
+                this.title = title;
+            }
+        }
+
+        GeocodeAddressTask(MapFragment context) {
+            fragmentReference = new WeakReference<>(context);
+        }
+
+        @Override
+        protected void onPreExecute() {
+            MapFragment fragment = fragmentReference.get();
+            if (fragment != null && fragment.getContext() != null) {
+                fragment.handleVisibility(fragment.pbMapLoading, true);
+            }
+        }
+
+        @Override
+        protected GeocodeResult doInBackground(String... params) {
+            MapFragment fragment = fragmentReference.get();
+            if (fragment == null || fragment.getContext() == null) {
+                return new GeocodeResult("Context lost during geocoding.", params[0], params.length > 1 ? params[1] : null);
+            }
+            Geocoder geocoder = new Geocoder(fragment.getContext(), Locale.getDefault());
+            String addressString = params[0];
+            String title = params.length > 1 ? params[1] : addressString;
+            try {
+                List<Address> addresses = geocoder.getFromLocationName(addressString, 1);
+                if (addresses != null && !addresses.isEmpty()) {
+                    Address location = addresses.get(0);
+                    return new GeocodeResult(new LatLng(location.getLatitude(), location.getLongitude()), addressString, title);
+                } else {
+                    return new GeocodeResult("Address not found: " + addressString, addressString, title);
+                }
+            } catch (IOException e) {
+                return new GeocodeResult("Geocoding failed: " + e.getMessage(), addressString, title);
+            }
+        }
+
+        @Override
+        protected void onPostExecute(GeocodeResult result) {
+            MapFragment fragment = fragmentReference.get();
+            if (fragment != null && fragment.isAdded()) { // Check if fragment is still added
+                fragment.onGeocodingResult(result.latLng, result.addressString, result.title, result.errorMessage);
+            }
         }
     }
 }

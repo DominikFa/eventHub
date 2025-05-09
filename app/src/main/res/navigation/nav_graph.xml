@@ -28,29 +28,12 @@
         android:id="@+id/loginActivity"
         android:name="com.example.event_hub.View.LoginActivity"
         android:label="activity_login"
-        tools:layout="@layout/activity_login" >
-        <action
-            android:id="@+id/action_loginActivity_to_registerActivity"
-            app:destination="@id/registerActivity" />
-        <action
-            android:id="@+id/action_loginActivity_to_mainFragment"
-            app:destination="@id/mainFragment"
-            app:popUpTo="@id/nav_graph"
-            app:popUpToInclusive="true"/>
-    </activity>
-
+        tools:layout="@layout/activity_login" />
     <activity
         android:id="@+id/registerActivity"
         android:name="com.example.event_hub.View.RegisterActivity"
         android:label="activity_register"
-        tools:layout="@layout/activity_register" >
-        <action
-            android:id="@+id/action_registerActivity_to_loginActivity"
-            app:destination="@id/loginActivity"
-            app:popUpTo="@id/loginActivity"
-            app:popUpToInclusive="true"/>
-    </activity>
-
+        tools:layout="@layout/activity_register" />
     <fragment
         android:id="@+id/eventDetailFragment"
         android:name="com.example.event_hub.View.EventDetailFragment"

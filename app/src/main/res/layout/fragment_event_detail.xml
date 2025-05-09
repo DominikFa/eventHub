@@ -28,6 +28,9 @@
         android:layout_marginEnd="24dp"
         android:src="@drawable/ic_profile"
         android:contentDescription="User Profile"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackgroundBorderless"
         app:tint="@android:color/white"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/tv_app_title_event_detail"
@@ -119,7 +122,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
-                        android:gravity="center"
+                        android:gravity="center_vertical"
                         android:textColor="@color/event_hub_text_meta_detail"
                         android:textSize="14sp"
                         app:drawableStartCompat="@drawable/ic_event_date"
@@ -131,13 +134,12 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:gravity="center"
+                        android:gravity="center_vertical"
                         android:textColor="@color/event_hub_text_meta_detail"
                         android:textSize="14sp"
                         app:drawableStartCompat="@drawable/ic_location"
                         android:drawablePadding="8dp"
                         tools:text="Centrum Konferencyjne, Warszawa"/>
-
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -159,9 +161,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:visibility="gone"
-                app:layout_constraintTop_toBottomOf="@id/tv_photos_title"
-                app:layout_constraintStart_toStartOf="@id/tv_photos_title"
-                app:layout_constraintEnd_toEndOf="@id/tv_photos_title"
+                app:layout_constraintTop_toTopOf="@id/tv_photos_title"
+                app:layout_constraintBottom_toBottomOf="@id/tv_photos_title"
+                app:layout_constraintStart_toEndOf="@id/tv_photos_title"
+                android:layout_marginStart="8dp"
                 tools:visibility="visible"/>
 
             <androidx.recyclerview.widget.RecyclerView
@@ -183,13 +186,12 @@
             <TextView
                 android:id="@+id/tv_no_photos_detail"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
                 android:text="Brak zdjęć dla tego wydarzenia."
                 android:gravity="center"
                 android:textColor="@android:color/darker_gray"
                 android:visibility="gone"
-                android:layout_marginTop="8dp"
-                app:layout_constraintTop_toBottomOf="@id/tv_photos_title"
+                app:layout_constraintTop_toTopOf="@id/rv_event_photos"
                 app:layout_constraintStart_toStartOf="@id/rv_event_photos"
                 app:layout_constraintEnd_toEndOf="@id/rv_event_photos"
                 app:layout_constraintBottom_toBottomOf="@id/rv_event_photos"
@@ -214,16 +216,17 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:visibility="gone"
-                app:layout_constraintTop_toBottomOf="@id/tv_participants_title"
-                app:layout_constraintStart_toStartOf="@id/tv_participants_title"
-                app:layout_constraintEnd_toEndOf="@id/tv_participants_title"
+                app:layout_constraintTop_toTopOf="@id/tv_participants_title"
+                app:layout_constraintBottom_toBottomOf="@id/tv_participants_title"
+                app:layout_constraintStart_toEndOf="@id/tv_participants_title"
+                android:layout_marginStart="8dp"
                 tools:visibility="visible"/>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rv_event_participants"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:minHeight="150dp"
+                android:minHeight="100dp"
                 android:layout_marginTop="8dp"
                 android:nestedScrollingEnabled="false"
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
@@ -236,13 +239,12 @@
             <TextView
                 android:id="@+id/tv_no_participants_detail"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
                 android:text="Brak zapisanych uczestników."
                 android:gravity="center"
                 android:textColor="@android:color/darker_gray"
                 android:visibility="gone"
-                android:layout_marginTop="8dp"
-                app:layout_constraintTop_toBottomOf="@id/tv_participants_title"
+                app:layout_constraintTop_toTopOf="@id/rv_event_participants"
                 app:layout_constraintStart_toStartOf="@id/rv_event_participants"
                 app:layout_constraintEnd_toEndOf="@id/rv_event_participants"
                 app:layout_constraintBottom_toBottomOf="@id/rv_event_participants"
@@ -269,7 +271,7 @@
             android:id="@+id/btn_join_leave_event_detail"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/button_purple_gradient_rectangular"
+            android:backgroundTint="@color/event_hub_button_purple_gradient_login"
             android:text="Dołącz do wydarzenia"
             android:textColor="@android:color/white"
             android:textSize="16sp"
@@ -281,17 +283,21 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_get_directions_detail"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                android:background="@drawable/button_purple_gradient_rectangular"
+                android:layout_marginEnd="4dp"
+                android:backgroundTint="@color/event_hub_button_purple_gradient_login"
                 android:text="Jak dojechać"
                 android:textColor="@android:color/white"
+                app:icon="@drawable/ic_location"
+                app:iconTint="@android:color/white"
+                app:iconGravity="textStart"
                 android:textSize="16sp"
                 app:cornerRadius="25dp"
                 android:paddingTop="12dp"
@@ -302,15 +308,53 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:background="@drawable/button_purple_gradient_rectangular"
+                android:layout_marginStart="4dp"
+                android:backgroundTint="@color/event_hub_button_purple_gradient_login"
                 android:text="Zaproś"
+                app:icon="@drawable/ic_person_add" app:iconTint="@android:color/white"
+                app:iconGravity="textStart"
                 android:textColor="@android:color/white"
                 android:textSize="16sp"
                 app:cornerRadius="25dp"
                 android:paddingTop="12dp"
                 android:paddingBottom="12dp"/>
         </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_upload_photo_detail"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Upload Photo"
+                app:strokeColor="@color/event_hub_purple_primary_main"
+                android:textColor="@color/event_hub_purple_primary_main"
+                app:icon="@drawable/ic_add_photo"
+                app:iconTint="@color/event_hub_purple_primary_main"
+                app:iconGravity="textStart"
+                android:layout_marginEnd="4dp"
+                android:visibility="gone" tools:visibility="visible"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_delete_event_detail"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Delete Event"
+                app:strokeColor="@android:color/holo_red_dark"
+                android:textColor="@android:color/holo_red_dark"
+                app:icon="@drawable/ic_delete" app:iconTint="@android:color/holo_red_dark"
+                app:iconGravity="textStart"
+                android:layout_marginStart="4dp"
+                android:visibility="gone" tools:visibility="visible"/>
+        </LinearLayout>
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

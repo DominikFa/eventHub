@@ -9,6 +9,10 @@
         android:icon="@drawable/ic_public_events"
         android:title="Publiczne" />
     <item
+        android:id="@+id/navigation_invitations"
+        android:icon="@drawable/ic_mail"
+        android:title="Zaproszenia" />
+    <item
         android:id="@+id/navigation_create_event"
         android:icon="@drawable/ic_add_event"
         android:title="Utwórz" />

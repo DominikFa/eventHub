@@ -1,91 +1,76 @@
 package com.example.event_hub.ViewModel;
 
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModel;
 
 import com.example.event_hub.Model.EventHubRepository;
 import com.example.event_hub.Model.EventModel;
-import com.example.event_hub.Model.UserModel;
-import com.example.event_hub.Model.ResultWrapper; // Ensure this import is correct
-
-import java.util.Date;
-// import java.util.UUID; // UUID generation is better handled by Repository
+import com.example.event_hub.Model.ResultWrapper;
 
 public class CreateEventViewModel extends ViewModel {
 
     private final EventHubRepository eventHubRepository;
-
     private final MutableLiveData<EventModel> _eventFormData = new MutableLiveData<>();
     public LiveData<EventModel> eventFormData = _eventFormData;
 
-    private final MutableLiveData<UserModel> _creatorInfo = new MutableLiveData<>();
-    public LiveData<UserModel> creatorInfo = _creatorInfo;
+    private final MediatorLiveData<ResultWrapper<EventModel>> _operationState = new MediatorLiveData<>();
+    public LiveData<ResultWrapper<EventModel>> createEventOperationState = _operationState;
 
-    public LiveData<ResultWrapper<EventModel>> createEventOperationState;
-
+    private String lastSubmittedEventTitleForComparison = null;
 
     public CreateEventViewModel() {
         eventHubRepository = EventHubRepository.getInstance();
-        _eventFormData.setValue(new EventModel());
-
-        createEventOperationState = eventHubRepository.singleEventOperationState;
+        resetFormAndState();
     }
 
-    public void setCreator(UserModel user) {
-        _creatorInfo.setValue(user);
-        EventModel currentEventData = _eventFormData.getValue();
-        if (currentEventData != null && user != null) {
-            currentEventData.setCreatedBy(user.getUserId());
-            _eventFormData.setValue(currentEventData);
-        }
-    }
-
-    public void updateEventDetailsInForm(String title, String description, Date startDate, Date endDate, String location, int maxParticipants, String creatorId) {
-        EventModel event = _eventFormData.getValue();
-        if (event == null) {
-            event = new EventModel();
-        }
-        event.setTitle(title);
-        event.setDescription(description);
-        event.setStartDate(startDate);
-        event.setEndDate(endDate);
-        event.setLocation(location);
-        event.setMaxParticipants(maxParticipants);
-        if (creatorId != null) {
-            event.setCreatedBy(creatorId);
-        }
-        _eventFormData.setValue(event);
-    }
-
-    /**
-     * Submits the event to be created via the repository.
-     * @param eventToCreate The EventModel object to be created.
-     */
-    public void submitCreateEvent(EventModel eventToCreate) { // Accepts EventModel
+    public void submitCreateEvent(EventModel eventToCreate, String authToken) { // Changed actingUserId to authToken
         if (eventToCreate == null) {
-            System.err.println("CreateEventViewModel: Attempted to submit null event.");
-            // Repository will post an error to singleEventOperationState if it receives null
+            _operationState.setValue(new ResultWrapper.Error<>("Event data is null."));
             return;
         }
-        System.out.println("CreateEventViewModel: Submitting event for creation: " + eventToCreate.toString());
-        eventHubRepository.createEvent(eventToCreate);
+        if (authToken == null || authToken.isEmpty()) {
+            _operationState.setValue(new ResultWrapper.Error<>("User not authenticated. Cannot create event."));
+            return;
+        }
+        // eventToCreate.setCreatedBy() will be handled by repository using validated token
+
+        _operationState.setValue(new ResultWrapper.Loading<>());
+        lastSubmittedEventTitleForComparison = eventToCreate.getTitle();
+
+        _operationState.removeSource(eventHubRepository.singleEventOperationState);
+        _operationState.addSource(eventHubRepository.singleEventOperationState, new Observer<ResultWrapper<EventModel>>() {
+            @Override
+            public void onChanged(ResultWrapper<EventModel> repoResult) {
+                if (repoResult instanceof ResultWrapper.Success) {
+                    EventModel createdEvent = ((ResultWrapper.Success<EventModel>) repoResult).getData();
+                    if (createdEvent != null && createdEvent.getTitle().equals(lastSubmittedEventTitleForComparison)) {
+                        _operationState.setValue(repoResult);
+                        _operationState.removeSource(eventHubRepository.singleEventOperationState);
+                        lastSubmittedEventTitleForComparison = null;
+                    }
+                } else if (repoResult instanceof ResultWrapper.Error) {
+                    _operationState.setValue(repoResult);
+                    _operationState.removeSource(eventHubRepository.singleEventOperationState);
+                    lastSubmittedEventTitleForComparison = null;
+                }
+            }
+        });
+        eventHubRepository.createEvent(eventToCreate, authToken);
     }
 
-    public void resetForm() {
-        EventModel newEvent = new EventModel();
-        UserModel creator = _creatorInfo.getValue();
-        if (creator != null) {
-            newEvent.setCreatedBy(creator.getUserId());
-        }
-        _eventFormData.setValue(newEvent);
-        // Consider resetting repository's singleEventOperationState to Idle if needed
-        // eventHubRepository.resetSingleEventOperationState(); // (This method would need to be created in repo)
+    public void resetFormAndState() {
+        _eventFormData.setValue(new EventModel());
+        _operationState.setValue(new ResultWrapper.Idle<>());
+        lastSubmittedEventTitleForComparison = null;
+        eventHubRepository.resetSingleEventOperationState();
     }
 
     @Override
     protected void onCleared() {
         super.onCleared();
-        System.out.println("CreateEventViewModel: Cleared.");
+        _operationState.removeSource(eventHubRepository.singleEventOperationState);
     }
 }

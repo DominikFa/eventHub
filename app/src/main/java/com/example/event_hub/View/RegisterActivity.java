@@ -1,4 +1,4 @@
-package com.example.event_hub.View; // Corrected package name
+package com.example.event_hub.View;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -11,7 +11,8 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.event_hub.R;
 import com.example.event_hub.ViewModel.AuthViewModel;
-import com.example.event_hub.Model.ResultWrapper; // Corrected import for ResultWrapper
+import com.example.event_hub.Model.ResultWrapper;
+import com.example.event_hub.Model.AuthResponse;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -21,11 +22,10 @@ public class RegisterActivity extends AppCompatActivity {
     private TextView tvLoginPrompt;
     private com.google.android.material.textfield.TextInputLayout tilUsernameRegister, tilEmailRegister, tilPasswordRegister;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_register); // Your XML file name
+        setContentView(R.layout.activity_register);
 
         authViewModel = new ViewModelProvider(this).get(AuthViewModel.class);
 
@@ -63,7 +63,7 @@ public class RegisterActivity extends AppCompatActivity {
             if (password.isEmpty()) {
                 tilPasswordRegister.setError("Password cannot be empty");
                 hasError = true;
-            } else if (password.length() < 6) { // Example: Minimum password length
+            } else if (password.length() < 6) { // Example: Password minimum length
                 tilPasswordRegister.setError("Password must be at least 6 characters");
                 hasError = true;
             }
@@ -76,36 +76,46 @@ public class RegisterActivity extends AppCompatActivity {
         });
 
         tvLoginPrompt.setOnClickListener(v -> {
-            // Navigate back to LoginActivity
             Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP); // Clears the registration activity from back stack
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP); // Clear RegisterActivity from backstack
             startActivity(intent);
-            // finish(); // Optionally finish RegisterActivity
+            finish();
         });
 
         authViewModel.registrationState.observe(this, result -> {
+            btnRegister.setEnabled(!(result instanceof ResultWrapper.Loading));
             if (result instanceof ResultWrapper.Loading) {
-                btnRegister.setEnabled(false);
                 btnRegister.setText("Registering...");
-            } else if (result instanceof ResultWrapper.Success) {
-                btnRegister.setEnabled(true);
-                btnRegister.setText("Zarejestruj");
-                Toast.makeText(RegisterActivity.this, "Registration Successful! Please login.", Toast.LENGTH_LONG).show();
-                // Navigate to Login screen after successful registration
+            } else {
+                btnRegister.setText(getString(R.string.register_button_text)); // Use string resource
+            }
+
+            if (result instanceof ResultWrapper.Success) {
+                ResultWrapper.Success<AuthResponse> successResult = (ResultWrapper.Success<AuthResponse>) result;
+                AuthResponse response = successResult.getData();
+                String message = "Registration Successful! Please login.";
+                if (response != null && response.getMessage() != null && !response.getMessage().isEmpty()){
+                    message = response.getMessage();
+                }
+                Toast.makeText(RegisterActivity.this, message, Toast.LENGTH_LONG).show();
+
                 Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(intent);
-                finishAffinity(); // Finish this activity and all parent activities up to login
+                finishAffinity(); // Finish this activity and all parent activities.
             } else if (result instanceof ResultWrapper.Error) {
-                btnRegister.setEnabled(true);
-                btnRegister.setText("Zarejestruj");
-                String errorMessage = ((ResultWrapper.Error<?>) result).getMessage();
-                // Show error, perhaps on the relevant field or a general error view
-                // For simplicity, using Toast, but TextInputLayout.setError is better for field-specific errors.
-                if (errorMessage != null && errorMessage.toLowerCase().contains("email")) {
-                    tilEmailRegister.setError(errorMessage);
+                ResultWrapper.Error<?> errorResult = (ResultWrapper.Error<?>) result;
+                String errorMessage = errorResult.getMessage();
+                if (errorMessage != null) {
+                    if (errorMessage.toLowerCase().contains("email")) {
+                        tilEmailRegister.setError(errorMessage);
+                    } else if (errorMessage.toLowerCase().contains("username")) {
+                        tilUsernameRegister.setError(errorMessage);
+                    } else {
+                        Toast.makeText(RegisterActivity.this, "Registration Failed: " + errorMessage, Toast.LENGTH_LONG).show();
+                    }
                 } else {
-                    Toast.makeText(RegisterActivity.this, "Registration Failed: " + errorMessage, Toast.LENGTH_LONG).show();
+                    Toast.makeText(RegisterActivity.this, "Registration Failed: Unknown error", Toast.LENGTH_LONG).show();
                 }
             }
         });
