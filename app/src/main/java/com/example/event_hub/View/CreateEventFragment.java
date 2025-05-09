@@ -23,6 +23,7 @@ import com.example.event_hub.R;
 import com.example.event_hub.ViewModel.AuthViewModel;
 import com.example.event_hub.ViewModel.CreateEventViewModel;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.switchmaterial.SwitchMaterial; // Import SwitchMaterial
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import java.text.SimpleDateFormat;
@@ -42,6 +43,7 @@ public class CreateEventFragment extends Fragment {
     private MaterialButton btnAddEventPhotos, btnCreateEventSubmit;
     private TextView tvSelectedEventStartDate, tvSelectedEventStartTime;
     private TextView tvSelectedEventEndDate, tvSelectedEventEndTime;
+    private SwitchMaterial switchEventPublic; // Added Switch
     private ImageView ivUserIcon;
     private ProgressBar pbCreateEventLoading;
 
@@ -60,7 +62,12 @@ public class CreateEventFragment extends Fragment {
         createEventViewModel = new ViewModelProvider(this).get(CreateEventViewModel.class);
         authViewModel = new ViewModelProvider(requireActivity()).get(AuthViewModel.class);
 
-        // Initialize endDateTimeCalendar to be 2 hours after startDateTimeCalendar
+        // Initialize start time to next hour, end time 2 hours after that.
+        startDateTimeCalendar.add(Calendar.HOUR_OF_DAY, 1);
+        startDateTimeCalendar.set(Calendar.MINUTE, 0);
+        startDateTimeCalendar.set(Calendar.SECOND, 0);
+        startDateTimeCalendar.set(Calendar.MILLISECOND, 0);
+
         endDateTimeCalendar.setTime(startDateTimeCalendar.getTime());
         endDateTimeCalendar.add(Calendar.HOUR_OF_DAY, 2);
     }
@@ -73,13 +80,11 @@ public class CreateEventFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        // It's important to reset state when the view is created,
-        // especially if navigating back to this fragment.
         createEventViewModel.resetFormAndState();
         bindViews(view);
         setupClickListeners();
         observeViewModels();
-        updateSelectedDateTimeDisplay(); // Initialize display
+        updateSelectedDateTimeDisplay();
     }
 
     private void bindViews(View view) {
@@ -102,6 +107,8 @@ public class CreateEventFragment extends Fragment {
         btnSelectEventEndTime = view.findViewById(R.id.btn_select_event_end_time);
         tvSelectedEventEndTime = view.findViewById(R.id.tv_selected_event_end_time);
 
+        switchEventPublic = view.findViewById(R.id.switch_event_public_create); // Bind the switch
+
         btnAddEventPhotos = view.findViewById(R.id.btn_add_event_photos);
         btnCreateEventSubmit = view.findViewById(R.id.btn_create_event_submit);
         ivUserIcon = view.findViewById(R.id.iv_user_icon_create_event);
@@ -117,7 +124,6 @@ public class CreateEventFragment extends Fragment {
         btnCreateEventSubmit.setOnClickListener(v -> attemptEventCreation());
 
         btnAddEventPhotos.setOnClickListener(v -> {
-            // TODO: Implement photo selection logic
             Toast.makeText(getContext(), "Add event photos - Not Implemented", Toast.LENGTH_SHORT).show();
         });
 
@@ -127,14 +133,16 @@ public class CreateEventFragment extends Fragment {
             if (currentAuthToken != null && loggedInUserId != null) {
                 Bundle profileArgs = new Bundle();
                 profileArgs.putString("userId", loggedInUserId);
-                // Assuming nav graph has an action from createEventFragment to profileFragment
-                // If not, this will crash. For now, let's assume it's meant to go to main then profile.
-                // Or add a direct action if needed.
-                // For simplicity, let's disable direct nav to profile from here if it's not standard.
-                Toast.makeText(getContext(), "Profile view from here TBD", Toast.LENGTH_SHORT).show();
-
+                // This action might not exist from CreateEventFragment, adjust nav graph or remove.
+                // For now, assume it's a placeholder or you'll add the action.
+                try {
+                    // navController.navigate(R.id.action_createEventFragment_to_profileFragment, profileArgs);
+                    Toast.makeText(getContext(), "Profile navigation from here is TBD.", Toast.LENGTH_SHORT).show();
+                } catch (IllegalArgumentException e) {
+                    Toast.makeText(getContext(), "Navigation to profile not set up from here.", Toast.LENGTH_SHORT).show();
+                }
             } else {
-                navController.navigate(R.id.loginActivity); // Or a global action to login
+                navController.navigate(R.id.loginActivity);
             }
         });
     }
@@ -186,52 +194,51 @@ public class CreateEventFragment extends Fragment {
 
         boolean isValid = true;
         if (TextUtils.isEmpty(title)) {
-            tilEventName.setError("Event name is required");
+            tilEventName.setError(getString(R.string.error_field_required));
             isValid = false;
         }
         if (TextUtils.isEmpty(description)) {
-            tilEventDescription.setError("Event description is required");
+            tilEventDescription.setError(getString(R.string.error_field_required));
             isValid = false;
         }
         if (TextUtils.isEmpty(location)) {
-            tilEventLocation.setError("Event location is required");
+            tilEventLocation.setError(getString(R.string.error_field_required));
             isValid = false;
         }
 
         int maxParticipantsInt = 0;
         if (TextUtils.isEmpty(maxParticipantsStr)) {
-            tilMaxParticipants.setError("Max participants is required");
+            tilMaxParticipants.setError(getString(R.string.error_field_required));
             isValid = false;
         } else {
             try {
                 maxParticipantsInt = Integer.parseInt(maxParticipantsStr);
                 if (maxParticipantsInt <= 0) {
-                    tilMaxParticipants.setError("Must be a positive number");
+                    tilMaxParticipants.setError(getString(R.string.error_positive_number_required));
                     isValid = false;
                 }
             } catch (NumberFormatException e) {
-                tilMaxParticipants.setError("Invalid number format");
+                tilMaxParticipants.setError(getString(R.string.error_invalid_number_format));
                 isValid = false;
             }
         }
 
-        // Date validation
         if (startDateTimeCalendar.getTime().after(endDateTimeCalendar.getTime())) {
-            Toast.makeText(getContext(), "End date/time must be after start date/time.", Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), R.string.toast_end_date_after_start, Toast.LENGTH_LONG).show();
             isValid = false;
         }
-        // Optionally: check if start date is in the past, though repository might handle this
-        // if (startDateTimeCalendar.before(Calendar.getInstance())) {
-        //    Toast.makeText(getContext(), "Start date cannot be in the past.", Toast.LENGTH_LONG).show();
-        //    isValid = false;
-        // }
+        Calendar now = Calendar.getInstance();
+        if (startDateTimeCalendar.before(now)) {
+            Toast.makeText(getContext(), "Start date and time cannot be in the past.", Toast.LENGTH_LONG).show();
+            isValid = false;
+        }
 
 
         if (!isValid) return;
 
         if (currentAuthToken == null) {
-            Toast.makeText(getContext(), "You must be logged in to create an event.", Toast.LENGTH_LONG).show();
-            if(getView() != null) Navigation.findNavController(getView()).navigate(R.id.loginActivity); // Or global action
+            Toast.makeText(getContext(), R.string.toast_login_to_create, Toast.LENGTH_LONG).show();
+            if(getView() != null) Navigation.findNavController(getView()).navigate(R.id.loginActivity);
             return;
         }
 
@@ -242,7 +249,7 @@ public class CreateEventFragment extends Fragment {
         newEvent.setEndDate(endDateTimeCalendar.getTime());
         newEvent.setLocation(location);
         newEvent.setMaxParticipants(maxParticipantsInt);
-        // createdBy will be set in the repository based on the authToken
+        newEvent.setPublic(switchEventPublic.isChecked()); // Get the value from the switch
 
         createEventViewModel.submitCreateEvent(newEvent, currentAuthToken);
     }
@@ -253,30 +260,29 @@ public class CreateEventFragment extends Fragment {
             btnCreateEventSubmit.setEnabled(token != null && !(createEventViewModel.createEventOperationState.getValue() instanceof ResultWrapper.Loading));
         });
         authViewModel.currentUserId.observe(getViewLifecycleOwner(), userId -> {
-            loggedInUserId = userId; // Store for potential use (e.g. profile nav)
+            loggedInUserId = userId;
             if (ivUserIcon != null) {
                 if (userId != null) {
-                    ivUserIcon.setImageResource(R.drawable.ic_profile); // Example icon
+                    ivUserIcon.setImageResource(R.drawable.ic_profile);
                 } else {
-                    ivUserIcon.setImageResource(R.drawable.ic_login); // Example icon
+                    ivUserIcon.setImageResource(R.drawable.ic_login);
                 }
             }
         });
-
 
         createEventViewModel.createEventOperationState.observe(getViewLifecycleOwner(), result -> {
             handleVisibility(pbCreateEventLoading, result instanceof ResultWrapper.Loading);
             btnCreateEventSubmit.setEnabled(!(result instanceof ResultWrapper.Loading) && currentAuthToken != null);
 
             if (result instanceof ResultWrapper.Success) {
-                Toast.makeText(getContext(), "Event created successfully!", Toast.LENGTH_LONG).show();
+                Toast.makeText(getContext(), R.string.toast_event_created_successfully, Toast.LENGTH_LONG).show();
                 if (getView() != null) {
-                    // Navigate back to main fragment, clearing create fragment from back stack
                     Navigation.findNavController(getView()).navigate(R.id.action_createEventFragment_to_mainFragment);
                 }
             } else if (result instanceof ResultWrapper.Error) {
-                String errorMessage = ((ResultWrapper.Error<?>) result).getMessage();
-                Toast.makeText(getContext(), "Failed to create event: " + (errorMessage != null ? errorMessage : "Unknown error"), Toast.LENGTH_LONG).show();
+                ResultWrapper.Error<?> errorResult = (ResultWrapper.Error<?>) result;
+                String errorMessage = errorResult.getMessage();
+                Toast.makeText(getContext(), getString(R.string.toast_failed_to_create_event, (errorMessage != null ? errorMessage : getString(R.string.error_unknown))), Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -285,8 +291,4 @@ public class CreateEventFragment extends Fragment {
             view.setVisibility(isLoading ? View.VISIBLE : View.GONE);
         }
     }
-
-    // Add these to strings.xml:
-    // <string name="selected_date_prefix_create">Start Date: </string>
-    // <string name="selected_time_prefix_create">Start Time: </string>
 }

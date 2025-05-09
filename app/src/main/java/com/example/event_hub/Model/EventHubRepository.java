@@ -1,10 +1,11 @@
 package com.example.event_hub.Model;
 
-import androidx.core.util.Pair; // For Pair from AuthRepository
+import androidx.core.util.Pair;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -12,8 +13,6 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class EventHubRepository {
@@ -22,14 +21,12 @@ public class EventHubRepository {
     private final ExecutorService executorService;
     private final AuthRepository authRepository;
 
-    // Data Stores
     private final List<UserModel> simulatedUsers = new ArrayList<>();
     private final List<EventModel> simulatedEvents = new ArrayList<>();
     private final List<ParticipantModel> simulatedParticipation = new ArrayList<>();
     private final List<InvitationModel> simulatedInvitations = new ArrayList<>();
     private final List<MediaModel> simulatedMedia = new ArrayList<>();
 
-    // LiveData
     private final MutableLiveData<ResultWrapper<List<EventModel>>> _publicEventsState = new MutableLiveData<>(new ResultWrapper.Idle<>());
     public LiveData<ResultWrapper<List<EventModel>>> publicEventsState = _publicEventsState;
 
@@ -56,7 +53,7 @@ public class EventHubRepository {
 
 
     private EventHubRepository() {
-        executorService = Executors.newFixedThreadPool(3); // Increased pool size for concurrent operations
+        executorService = Executors.newFixedThreadPool(3);
         authRepository = AuthRepository.getInstance();
         initializePlaceholderData();
     }
@@ -96,40 +93,53 @@ public class EventHubRepository {
         UserDetails detailsAdmin = new UserDetails("Admin FullName", "I am the administrator.", "admin_avatar.png");
         simulatedUsers.add(new UserModel("admin_user_007", "admin@example.com", "admin@example.com", "admin", new Date(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(30)), "active", detailsAdmin));
         UserDetails details1 = new UserDetails("Test User FullName", "Bio for the main test user.", "test_avatar.png");
-        simulatedUsers.add(new UserModel("user_jwt_123", "test@example.com", "test@example.com", "user", new Date(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(10)), "active", details1)); // User for test@example.com
+        simulatedUsers.add(new UserModel("user_jwt_123", "test@example.com", "test@example.com", "user", new Date(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(10)), "active", details1));
         UserDetails details2 = new UserDetails("Another User", "Organizer of the Tech Conference.", "another_avatar.png");
         simulatedUsers.add(new UserModel("another_user_456", "another_user_login", "another@test.com", "organizer", new Date(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(5)), "active", details2));
 
         long currentTime = System.currentTimeMillis();
-        // Event in 30 days
-        simulatedEvents.add(new EventModel("event101", "Tech Conference 2025", "Annual technology conference.", "Convention Center", new Date(currentTime + TimeUnit.DAYS.toMillis(30)), new Date(currentTime + TimeUnit.DAYS.toMillis(32)), 500, "another_user_456"));
-        // Event in 15 days
-        simulatedEvents.add(new EventModel("event102", "Admin's Grand Meetup", "A special event by admin.", "Secret HQ", new Date(currentTime + TimeUnit.DAYS.toMillis(15)), new Date(currentTime + TimeUnit.DAYS.toMillis(15) + TimeUnit.HOURS.toMillis(5)), 100, "admin_user_007"));
-        // Event for "today" to test default view in MainFragment
-        // Calendar todayCal = Calendar.getInstance();
-        // simulatedEvents.add(new EventModel("event_today_01", "Today's Local Market", "Fresh produce and crafts.", "Town Square", todayCal.getTime(), new Date(todayCal.getTimeInMillis() + TimeUnit.HOURS.toMillis(4)), 50, "user_jwt_123"));
+        // Public Event in 30 days
+        simulatedEvents.add(new EventModel("event101", "Tech Conference 2025", "Annual technology conference.", "Convention Center", new Date(currentTime + TimeUnit.DAYS.toMillis(30)), new Date(currentTime + TimeUnit.DAYS.toMillis(32)), 500, "another_user_456", true));
+        // Private Event (Admin's) in 15 days
+        simulatedEvents.add(new EventModel("event102", "Admin's Private Meetup", "A special private event by admin.", "Secret HQ", new Date(currentTime + TimeUnit.DAYS.toMillis(15)), new Date(currentTime + TimeUnit.DAYS.toMillis(15) + TimeUnit.HOURS.toMillis(5)), 100, "admin_user_007", false));
+        // Public Event for "today" (useful for default MainFragment view)
+        Calendar todayCal = Calendar.getInstance();
+        simulatedEvents.add(new EventModel("event_today_01", "Today's Public Market", "Fresh produce and crafts for everyone.", "Town Square", todayCal.getTime(), new Date(todayCal.getTimeInMillis() + TimeUnit.HOURS.toMillis(4)), 50, "user_jwt_123", true));
+        // Another public event for a future date
+        simulatedEvents.add(new EventModel("event103", "Future Public Workshop", "A workshop open to all.", "Community Hall", new Date(currentTime + TimeUnit.DAYS.toMillis(20)), new Date(currentTime + TimeUnit.DAYS.toMillis(20) + TimeUnit.HOURS.toMillis(3)), 30, "user_jwt_123", true));
+        // Another private event attended by test@example.com
+        simulatedEvents.add(new EventModel("event_private_attended", "Test User's Private Project Meeting", "Discussing project milestones.", "Office Room 3", new Date(currentTime + TimeUnit.DAYS.toMillis(5)), new Date(currentTime + TimeUnit.DAYS.toMillis(5) + TimeUnit.HOURS.toMillis(2)), 10, "user_jwt_123", false));
 
 
-        _publicEventsState.postValue(new ResultWrapper.Success<>(new ArrayList<>(simulatedEvents))); // Initialize with all events
+        // Initial post for public events (will be filtered in fetchPublicEvents now)
+        // _publicEventsState.postValue(new ResultWrapper.Success<>(new ArrayList<>(simulatedEvents)));
+        // Instead, trigger the fetch method which applies filtering:
+        fetchPublicEvents();
 
-        simulatedParticipation.add(new ParticipantModel("event101", "user_jwt_123", "attending", "participant"));
+
+        // Test user attends their own private meeting and the public market
+        simulatedParticipation.add(new ParticipantModel("event_private_attended", "user_jwt_123", "attending", "organizer"));
+        simulatedParticipation.add(new ParticipantModel("event_today_01", "user_jwt_123", "attending", "participant"));
+
+        simulatedParticipation.add(new ParticipantModel("event101", "user_jwt_123", "attending", "participant")); // test@example.com attends Tech Conference
         simulatedParticipation.add(new ParticipantModel("event101", "another_user_456", "attending", "organizer"));
-        simulatedParticipation.add(new ParticipantModel("event102", "admin_user_007", "attending", "organizer"));
+        simulatedParticipation.add(new ParticipantModel("event102", "admin_user_007", "attending", "organizer")); // Admin attends their private meetup
 
-        simulatedInvitations.add(new InvitationModel("inv_001", "event101", "user_jwt_123", "sent", new Date(currentTime - TimeUnit.DAYS.toMillis(1)), null));
-        simulatedInvitations.add(new InvitationModel("inv_admin_001", "event102", "user_jwt_123", "sent", new Date(currentTime - TimeUnit.DAYS.toMillis(2)), null));
+
+        simulatedInvitations.add(new InvitationModel("inv_001", "event101", "user_jwt_123", "accepted", new Date(currentTime - TimeUnit.DAYS.toMillis(1)), new Date())); // Tech conf invitation accepted
+        simulatedInvitations.add(new InvitationModel("inv_admin_001", "event102", "user_jwt_123", "declined", new Date(currentTime - TimeUnit.DAYS.toMillis(2)), new Date())); // Admin's private meetup declined by test user
 
         simulatedMedia.add(new MediaModel("media_001", "event101", "another_user_456", "https://via.placeholder.com/300.png/09f/fff?Text=Event101Logo", "image/png", new Date(), "logo", "event101_logo.png", "Tech Conference Logo"));
         simulatedMedia.add(new MediaModel("media_admin_001", "event102", "admin_user_007", "https://via.placeholder.com/300.png/f90/fff?Text=AdminEventLogo", "image/png", new Date(), "logo", "admin_event_logo.png", "Admin Event Logo"));
         System.out.println("EventHubRepository: Placeholder data initialized.");
     }
 
-    // --- Profile Methods ---
+    // --- Profile Methods --- (No changes here related to isPublic)
     public void fetchUserProfile(String userId) {
         _userProfileOperationState.postValue(new ResultWrapper.Loading<>());
         executorService.submit(() -> {
             try {
-                Thread.sleep(200); // Simulate network delay
+                Thread.sleep(200);
                 Optional<UserModel> userOpt = findUserById(userId);
                 if (userOpt.isPresent()) {
                     _userProfileOperationState.postValue(new ResultWrapper.Success<>(userOpt.get()));
@@ -161,8 +171,8 @@ public class EventHubRepository {
                 Optional<UserModel> userOpt = findUserById(userIdToEdit);
                 if (userOpt.isPresent()) {
                     UserModel user = userOpt.get();
-                    user.setUserDetails(updatedDetails); // Update the details
-                    _userProfileOperationState.postValue(new ResultWrapper.Success<>(user)); // Post success with updated user
+                    user.setUserDetails(updatedDetails);
+                    _userProfileOperationState.postValue(new ResultWrapper.Success<>(user));
                 } else {
                     _userProfileOperationState.postValue(new ResultWrapper.Error<>("Update failed: User to edit not found."));
                 }
@@ -187,8 +197,6 @@ public class EventHubRepository {
                     _voidOperationState.postValue(new ResultWrapper.Error<>("Permission Denied: Insufficient rights to delete user."));
                     return;
                 }
-
-                // Design Consideration: Prevent deletion of the last admin.
                 Optional<UserModel> userToDeleteOpt = findUserById(userIdToDelete);
                 if (userToDeleteOpt.isPresent() && "admin".equalsIgnoreCase(userToDeleteOpt.get().getRole())) {
                     long adminCount = simulatedUsers.stream().filter(u -> "admin".equalsIgnoreCase(u.getRole()) && "active".equals(u.getStatus())).count();
@@ -197,23 +205,17 @@ public class EventHubRepository {
                         return;
                     }
                 }
-
                 boolean removed = simulatedUsers.removeIf(u -> userIdToDelete.equals(u.getUserId()));
                 if (removed) {
-                    // Cascade deletes for related data
                     simulatedParticipation.removeIf(p -> userIdToDelete.equals(p.getAccountId()));
                     simulatedInvitations.removeIf(i -> userIdToDelete.equals(i.getAccountId()));
                     simulatedMedia.removeIf(m -> userIdToDelete.equals(m.getAccountId()));
-                    // Also remove events created by this user
                     simulatedEvents.removeIf(e -> userIdToDelete.equals(e.getCreatedBy()));
-
-                    // If the deleted user is the currently logged-in user in AuthRepository, log them out
                     if (userIdToDelete.equals(authRepository.getCurrentUserIdSynchronous())) {
-                        authRepository.logout(); // This will update AuthRepository's LiveData
+                        authRepository.logout();
                     }
-
                     _voidOperationState.postValue(new ResultWrapper.Success<>(null));
-                    fetchPublicEvents(); // Refresh public events list as some might have been deleted
+                    fetchPublicEvents();
                 } else {
                     _voidOperationState.postValue(new ResultWrapper.Error<>("Deletion failed: User not found."));
                 }
@@ -224,7 +226,6 @@ public class EventHubRepository {
         });
     }
 
-
     public void banUser(String userIdToBan, String authToken) {
         _voidOperationState.postValue(new ResultWrapper.Loading<>());
         executorService.submit(() -> {
@@ -233,31 +234,26 @@ public class EventHubRepository {
                 _voidOperationState.postValue(new ResultWrapper.Error<>("Permission Denied: Only admins can ban users."));
                 return;
             }
-            Pair<String, String> principal = principalOpt.get(); // Current admin
+            Pair<String, String> principal = principalOpt.get();
             try {
                 Thread.sleep(500);
-                if (userIdToBan.equals(principal.first)) { // Admin trying to ban self
+                if (userIdToBan.equals(principal.first)) {
                     _voidOperationState.postValue(new ResultWrapper.Error<>("Admins cannot ban themselves."));
                     return;
                 }
-
                 Optional<UserModel> userOpt = findUserById(userIdToBan);
                 if (userOpt.isPresent()) {
                     UserModel user = userOpt.get();
-                    if ("admin".equalsIgnoreCase(user.getRole())) { // Admin trying to ban another admin
+                    if ("admin".equalsIgnoreCase(user.getRole())) {
                         _voidOperationState.postValue(new ResultWrapper.Error<>("Cannot ban another admin."));
                         return;
                     }
                     user.setStatus("banned");
-                    // Update participation status for the banned user
                     simulatedParticipation.forEach(p -> {
-                        if (userIdToBan.equals(p.getAccountId())) {
-                            p.setStatus("banned"); // Or "cancelled" if more appropriate
-                        }
+                        if (userIdToBan.equals(p.getAccountId())) p.setStatus("banned");
                     });
                     _voidOperationState.postValue(new ResultWrapper.Success<>(null));
-                    // Optionally refresh user profile if it's being observed elsewhere
-                    fetchUserProfile(userIdToBan); // This updates _userProfileOperationState
+                    fetchUserProfile(userIdToBan);
                 } else {
                     _voidOperationState.postValue(new ResultWrapper.Error<>("Ban failed: User not found."));
                 }
@@ -274,11 +270,12 @@ public class EventHubRepository {
         _publicEventsState.postValue(new ResultWrapper.Loading<>());
         executorService.submit(() -> {
             try {
-                Thread.sleep(700); // Simulate network delay
-                // In a real app, this would be a network call. Here, just return the simulated list.
-                // The list might be filtered by backend for "public" status, date, etc.
-                // For simulation, we return all events.
-                _publicEventsState.postValue(new ResultWrapper.Success<>(new ArrayList<>(simulatedEvents)));
+                Thread.sleep(700);
+                // Filter for public events
+                List<EventModel> publicEvents = simulatedEvents.stream()
+                        .filter(EventModel::isPublic) // Use the new isPublic getter
+                        .collect(Collectors.toList());
+                _publicEventsState.postValue(new ResultWrapper.Success<>(publicEvents));
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 _publicEventsState.postValue(new ResultWrapper.Error<>("Public events fetch interrupted."));
@@ -295,7 +292,7 @@ public class EventHubRepository {
         specificUserAttendedEvents.postValue(new ResultWrapper.Loading<>());
         executorService.submit(() -> {
             try {
-                Thread.sleep(700); // Simulate delay
+                Thread.sleep(700);
                 List<String> attendedEventIds = simulatedParticipation.stream()
                         .filter(p -> userId.equals(p.getAccountId()) && "attending".equals(p.getStatus()))
                         .map(ParticipantModel::getEventId)
@@ -318,7 +315,7 @@ public class EventHubRepository {
         _singleEventOperationState.postValue(new ResultWrapper.Loading<>());
         executorService.submit(() -> {
             try {
-                Thread.sleep(400); // Simulate delay
+                Thread.sleep(400);
                 Optional<EventModel> eventOpt = findEventById(eventId);
                 if (eventOpt.isPresent()) {
                     _singleEventOperationState.postValue(new ResultWrapper.Success<>(eventOpt.get()));
@@ -344,21 +341,26 @@ public class EventHubRepository {
             Pair<String, String> principal = principalOpt.get();
             try {
                 Thread.sleep(1000);
-                eventToCreate.setCreatedBy(principal.first); // Set creator from validated token
+                eventToCreate.setCreatedBy(principal.first);
                 if (eventToCreate.getTitle() == null || eventToCreate.getTitle().trim().isEmpty()) {
                     _singleEventOperationState.postValue(new ResultWrapper.Error<>("Event title is required.")); return;
                 }
                 if (eventToCreate.getStartDate() == null || eventToCreate.getEndDate() == null || eventToCreate.getEndDate().before(eventToCreate.getStartDate())) {
-                    _singleEventOperationState.postValue(new ResultWrapper.Error<>("Valid start and end dates are required for event. End date must be after start date.")); return;
+                    _singleEventOperationState.postValue(new ResultWrapper.Error<>("Valid start and end dates are required. End date must be after start date.")); return;
                 }
                 if (eventToCreate.getId() == null || eventToCreate.getId().isEmpty()) {
                     eventToCreate.setId("event_new_" + UUID.randomUUID().toString().substring(0, 8));
                 }
+                // When creating an event, it defaults to public from EventModel constructor,
+                // or it could be set explicitly in CreateEventFragment before calling this.
+                // For now, we assume eventToCreate.isPublic() is already set as desired.
+
                 simulatedEvents.add(eventToCreate);
-                // Automatically add creator as organizer participant
                 simulatedParticipation.add(new ParticipantModel(eventToCreate.getId(), principal.first, "attending", "organizer"));
                 _singleEventOperationState.postValue(new ResultWrapper.Success<>(eventToCreate));
-                fetchPublicEvents(); // Refresh public events list
+                if (eventToCreate.isPublic()) { // Only refresh public list if the new event is public
+                    fetchPublicEvents();
+                }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 _singleEventOperationState.postValue(new ResultWrapper.Error<>("Create event interrupted."));
@@ -381,6 +383,8 @@ public class EventHubRepository {
                     _voidOperationState.postValue(new ResultWrapper.Error<>("Delete event failed: Event not found.")); return;
                 }
                 EventModel event = eventOpt.get();
+                boolean wasPublic = event.isPublic(); // Check before removing
+
                 if (!principal.first.equals(event.getCreatedBy()) && !isPrincipalAdmin(principal)) {
                     _voidOperationState.postValue(new ResultWrapper.Error<>("Permission Denied: Only the event creator or an admin can delete this event.")); return;
                 }
@@ -390,10 +394,11 @@ public class EventHubRepository {
                     simulatedInvitations.removeIf(i -> i.getEventId().equals(eventId));
                     simulatedMedia.removeIf(m -> m.getEventId().equals(eventId));
                     _voidOperationState.postValue(new ResultWrapper.Success<>(null));
-                    fetchPublicEvents(); // Refresh public events list
+                    if (wasPublic) { // Only refresh public list if the deleted event was public
+                        fetchPublicEvents();
+                    }
                 } else {
-                    // This case should ideally not happen if eventOpt.isPresent() was true
-                    _voidOperationState.postValue(new ResultWrapper.Error<>("Delete event failed unexpectedly after finding event."));
+                    _voidOperationState.postValue(new ResultWrapper.Error<>("Delete event failed unexpectedly."));
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -402,18 +407,32 @@ public class EventHubRepository {
         });
     }
 
-    public void joinPublicEvent(String eventId, String authToken) { // Changed userId to authToken
+    // ... (rest of the EventHubRepository methods: joinPublicEvent, leaveEvent, participant methods, invitation methods, media methods, utility methods)
+    // These methods do not directly need to change for the isPublic flag on EventModel,
+    // as their primary logic revolves around participation, invitations, and media linked to an event ID.
+    // The key is that fetchPublicEvents() now filters correctly.
+
+    public void joinPublicEvent(String eventId, String authToken) {
         _voidOperationState.postValue(new ResultWrapper.Loading<>());
         executorService.submit(() -> {
             Optional<Pair<String, String>> principalOpt = authRepository.validateTokenAndExtractPrincipal(authToken);
             if (!principalOpt.isPresent()) {
                 _voidOperationState.postValue(new ResultWrapper.Error<>("Unauthorized: Please login to join.")); return;
             }
-            String userId = principalOpt.get().first; // Get userId from token
+            String userId = principalOpt.get().first;
             try {
                 Thread.sleep(600);
                 Optional<EventModel> eventOpt = findEventById(eventId);
                 if (!eventOpt.isPresent()) { _voidOperationState.postValue(new ResultWrapper.Error<>("Join failed: Event not found.")); return; }
+                // Check if the event is public if joining through a "public join" action
+                // However, join can also happen via invitation acceptance to a private event.
+                // For this specific method "joinPublicEvent", it implies the event should be public.
+                // If this method is also used for accepting invites to private events, this check might be too strict.
+                // For now, let's assume this method is for explicitly joining events found in the public list.
+                if (!eventOpt.get().isPublic()) {
+                    _voidOperationState.postValue(new ResultWrapper.Error<>("Join failed: This event is not public.")); return;
+                }
+
 
                 Optional<ParticipantModel> existingParticipation = simulatedParticipation.stream()
                         .filter(p -> eventId.equals(p.getEventId()) && userId.equals(p.getAccountId()))
@@ -422,17 +441,17 @@ public class EventHubRepository {
                 if (existingParticipation.isPresent()) {
                     ParticipantModel participation = existingParticipation.get();
                     if ("banned".equals(participation.getStatus())) { _voidOperationState.postValue(new ResultWrapper.Error<>("Cannot join: User is banned from this event.")); return; }
-                    else if ("attending".equals(participation.getStatus())) { _voidOperationState.postValue(new ResultWrapper.Success<>(null)); return; } // Already attending
-                    else { // e.g., was "cancelled", now rejoining
+                    else if ("attending".equals(participation.getStatus())) { _voidOperationState.postValue(new ResultWrapper.Success<>(null)); return; }
+                    else {
                         participation.setStatus("attending");
-                        participation.setEventRole("participant"); // Reset role to participant
+                        participation.setEventRole("participant");
                         _voidOperationState.postValue(new ResultWrapper.Success<>(null));
                     }
                 } else {
                     simulatedParticipation.add(new ParticipantModel(eventId, userId, "attending", "participant"));
                     _voidOperationState.postValue(new ResultWrapper.Success<>(null));
                 }
-                fetchEventParticipants(eventId); // Refresh participants for this event
+                fetchEventParticipants(eventId);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 _voidOperationState.postValue(new ResultWrapper.Error<>("Join event interrupted."));
@@ -440,23 +459,22 @@ public class EventHubRepository {
         });
     }
 
-    public void leaveEvent(String eventId, String authToken) { // Changed userId to authToken
+    public void leaveEvent(String eventId, String authToken) {
         _voidOperationState.postValue(new ResultWrapper.Loading<>());
         executorService.submit(() -> {
             Optional<Pair<String, String>> principalOpt = authRepository.validateTokenAndExtractPrincipal(authToken);
             if (!principalOpt.isPresent()) {
                 _voidOperationState.postValue(new ResultWrapper.Error<>("Unauthorized: Please login.")); return;
             }
-            String userId = principalOpt.get().first; // Get userId from token
+            String userId = principalOpt.get().first;
             try {
                 Thread.sleep(600);
-                // Remove if user is an active participant. Don't remove if they are, e.g., an organizer who "cancelled" their own participation.
                 boolean removed = simulatedParticipation.removeIf(p -> eventId.equals(p.getEventId()) && userId.equals(p.getAccountId()) && "attending".equals(p.getStatus()));
                 if(removed) {
                     _voidOperationState.postValue(new ResultWrapper.Success<>(null));
-                    fetchEventParticipants(eventId); // Refresh participants for this event
+                    fetchEventParticipants(eventId);
                 } else {
-                    _voidOperationState.postValue(new ResultWrapper.Error<>("Failed to leave: Not currently an active participant or participation record not found."));
+                    _voidOperationState.postValue(new ResultWrapper.Error<>("Failed to leave: Not currently an active participant or not found."));
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -465,15 +483,13 @@ public class EventHubRepository {
         });
     }
 
-
-    // --- Participant Methods ---
     public void fetchEventParticipants(String eventId) {
         _eventParticipantsState.postValue(new ResultWrapper.Loading<>());
         executorService.submit(() -> {
             try {
                 Thread.sleep(750);
                 List<String> accountIds = simulatedParticipation.stream()
-                        .filter(p -> eventId.equals(p.getEventId()) && "attending".equals(p.getStatus())) // Only show attending
+                        .filter(p -> eventId.equals(p.getEventId()) && "attending".equals(p.getStatus()))
                         .map(ParticipantModel::getAccountId)
                         .distinct()
                         .collect(Collectors.toList());
@@ -501,24 +517,18 @@ public class EventHubRepository {
                 Optional<EventModel> eventOpt = findEventById(eventId);
                 if (!eventOpt.isPresent()) { _voidOperationState.postValue(new ResultWrapper.Error<>("Remove failed: Event not found.")); return; }
                 EventModel event = eventOpt.get();
-
-                // Permission check: Event creator or Admin can remove participants
                 if (!principal.first.equals(event.getCreatedBy()) && !isPrincipalAdmin(principal)) {
-                    _voidOperationState.postValue(new ResultWrapper.Error<>("Permission Denied: Only event creator or admin can remove participants.")); return;
+                    _voidOperationState.postValue(new ResultWrapper.Error<>("Permission Denied: Only creator or admin can remove.")); return;
                 }
-
-                // Prevent event creator from being removed as a participant through this action
-                // (they are implicitly an organizer). They should delete the event if they want to remove themselves.
                 if (participantAccountId.equals(event.getCreatedBy())) {
-                    _voidOperationState.postValue(new ResultWrapper.Error<>("Event creator cannot be removed as participant via this action. Consider deleting the event or transferring ownership.")); return;
+                    _voidOperationState.postValue(new ResultWrapper.Error<>("Event creator cannot be removed as participant via this action.")); return;
                 }
-
                 boolean removed = simulatedParticipation.removeIf(p -> eventId.equals(p.getEventId()) && participantAccountId.equals(p.getAccountId()));
                 if (removed) {
                     _voidOperationState.postValue(new ResultWrapper.Success<>(null));
-                    fetchEventParticipants(eventId); // Refresh participant list
+                    fetchEventParticipants(eventId);
                 } else {
-                    _voidOperationState.postValue(new ResultWrapper.Error<>("Remove failed: Participant not found in this event."));
+                    _voidOperationState.postValue(new ResultWrapper.Error<>("Remove failed: Participant not found."));
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -527,8 +537,6 @@ public class EventHubRepository {
         });
     }
 
-
-    // --- Invitation Methods ---
     public void fetchInvitationsForUser(String accountId) {
         _userInvitationsState.postValue(new ResultWrapper.Loading<>());
         executorService.submit(() -> {
@@ -545,7 +553,6 @@ public class EventHubRepository {
         });
     }
 
-
     public void sendInvitation(String eventId, String recipientAccountId, String authTokenSender) {
         _voidOperationState.postValue(new ResultWrapper.Loading<>());
         executorService.submit(() -> {
@@ -559,40 +566,28 @@ public class EventHubRepository {
                 Optional<EventModel> eventOpt = findEventById(eventId);
                 if (!eventOpt.isPresent()) { _voidOperationState.postValue(new ResultWrapper.Error<>("Send failed: Event not found.")); return; }
                 EventModel event = eventOpt.get();
-
-                // Permission: Only event creator or an admin can send invitations for this event
                 if (!senderPrincipal.first.equals(event.getCreatedBy()) && !isPrincipalAdmin(senderPrincipal)) {
-                    _voidOperationState.postValue(new ResultWrapper.Error<>("Permission Denied: Only event creator or admin can send invitations for this event.")); return;
+                    _voidOperationState.postValue(new ResultWrapper.Error<>("Permission Denied: Only event creator or admin can send invitations.")); return;
                 }
-
                 Optional<UserModel> recipientOpt = findUserById(recipientAccountId);
-                if (!recipientOpt.isPresent() || !"active".equals(recipientOpt.get().getStatus())) { // Check if recipient is active
+                if (!recipientOpt.isPresent() || !"active".equals(recipientOpt.get().getStatus())) {
                     _voidOperationState.postValue(new ResultWrapper.Error<>("Send invitation failed: Recipient not found or not active.")); return;
                 }
-
-                // Cannot send invitation to self
                 if (recipientAccountId.equals(senderPrincipal.first)) {
                     _voidOperationState.postValue(new ResultWrapper.Error<>("Cannot send invitation to self.")); return;
                 }
-
-                // Check if user is already a participant
                 boolean alreadyParticipant = simulatedParticipation.stream().anyMatch(p -> eventId.equals(p.getEventId()) && recipientAccountId.equals(p.getAccountId()) && "attending".equals(p.getStatus()));
                 if (alreadyParticipant) {
-                    _voidOperationState.postValue(new ResultWrapper.Error<>("User is already a participant in this event.")); return;
+                    _voidOperationState.postValue(new ResultWrapper.Error<>("User is already a participant.")); return;
                 }
-
-                // Check if user already has a pending or accepted invitation
                 boolean alreadyInvited = simulatedInvitations.stream().anyMatch(i -> eventId.equals(i.getEventId()) && recipientAccountId.equals(i.getAccountId()) && ("sent".equals(i.getInvitationStatus()) || "accepted".equals(i.getInvitationStatus())));
                 if (alreadyInvited) {
-                    _voidOperationState.postValue(new ResultWrapper.Error<>("User already has an active or accepted invitation for this event.")); return;
+                    _voidOperationState.postValue(new ResultWrapper.Error<>("User has an active or accepted invitation.")); return;
                 }
-
                 String newInvitationId = "inv_new_" + UUID.randomUUID().toString().substring(0, 8);
                 InvitationModel newInvitation = new InvitationModel(newInvitationId, eventId, recipientAccountId, "sent", new Date(), null);
                 simulatedInvitations.add(newInvitation);
                 _voidOperationState.postValue(new ResultWrapper.Success<>(null));
-                // Optionally, refresh invitations for the sender if they are viewing their sent invitations (not currently a feature)
-                // or for the recipient if they are actively polling (handled by fetchInvitationsForUser when recipient views)
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 _voidOperationState.postValue(new ResultWrapper.Error<>("Send invitation interrupted."));
@@ -609,35 +604,27 @@ public class EventHubRepository {
             }
             Pair<String, String> actingPrincipal = actingPrincipalOpt.get();
             String actingUserId = actingPrincipal.first;
-
             try {
                 Thread.sleep(400);
                 Optional<InvitationModel> invOpt = simulatedInvitations.stream().filter(inv -> inv.getInvitationId().equals(invitationId)).findFirst();
                 if (!invOpt.isPresent()) { _voidOperationState.postValue(new ResultWrapper.Error<>("Update failed: Invitation not found.")); return; }
-
                 InvitationModel inv = invOpt.get();
-                Optional<EventModel> eventOpt = findEventById(inv.getEventId()); // Needed for revoke permission check
+                Optional<EventModel> eventOpt = findEventById(inv.getEventId());
 
-                // Permission checks
                 if (("accepted".equals(newStatus) || "declined".equals(newStatus))) {
-                    // Only the recipient of the invitation can accept or decline it.
                     if (!actingUserId.equals(inv.getAccountId())) {
-                        _voidOperationState.postValue(new ResultWrapper.Error<>("Permission Denied: Only the recipient can accept or decline an invitation.")); return;
+                        _voidOperationState.postValue(new ResultWrapper.Error<>("Permission Denied: Only recipient can act on invitation.")); return;
                     }
                 } else if ("revoked".equals(newStatus)) {
-                    // Only the event creator or an admin can revoke an invitation.
                     if (!eventOpt.isPresent() || (!actingUserId.equals(eventOpt.get().getCreatedBy()) && !isPrincipalAdmin(actingPrincipal))) {
-                        _voidOperationState.postValue(new ResultWrapper.Error<>("Permission Denied: Only the event creator or an admin can revoke an invitation.")); return;
+                        _voidOperationState.postValue(new ResultWrapper.Error<>("Permission Denied: Only creator or admin can revoke.")); return;
                     }
                 } else {
-                    _voidOperationState.postValue(new ResultWrapper.Error<>("Invalid status update: " + newStatus)); return;
+                    _voidOperationState.postValue(new ResultWrapper.Error<>("Invalid status update.")); return;
                 }
-
                 inv.setInvitationStatus(newStatus);
                 inv.setRespondedAt(new Date());
-
                 if ("accepted".equals(newStatus)) {
-                    // Add user to participants list if not already there (or update status if was e.g. "cancelled")
                     Optional<ParticipantModel> existingPart = simulatedParticipation.stream()
                             .filter(p -> inv.getEventId().equals(p.getEventId()) && inv.getAccountId().equals(p.getAccountId()))
                             .findFirst();
@@ -647,15 +634,13 @@ public class EventHubRepository {
                     } else {
                         simulatedParticipation.add(new ParticipantModel(inv.getEventId(), inv.getAccountId(), "attending", "participant"));
                     }
-                    fetchEventParticipants(inv.getEventId()); // Refresh participants list
+                    fetchEventParticipants(inv.getEventId());
                 } else if ("declined".equals(newStatus) || "revoked".equals(newStatus)) {
-                    // Remove user from participants if they were there due to a previous acceptance that is now declined/revoked
                     simulatedParticipation.removeIf(p -> inv.getEventId().equals(p.getEventId()) && inv.getAccountId().equals(p.getAccountId()));
-                    fetchEventParticipants(inv.getEventId()); // Refresh participants list
+                    fetchEventParticipants(inv.getEventId());
                 }
-
                 _voidOperationState.postValue(new ResultWrapper.Success<>(null));
-                fetchInvitationsForUser(inv.getAccountId()); // Refresh invitations for the user whose invitation changed
+                fetchInvitationsForUser(inv.getAccountId());
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 _voidOperationState.postValue(new ResultWrapper.Error<>("Invitation update interrupted."));
@@ -663,8 +648,6 @@ public class EventHubRepository {
         });
     }
 
-
-    // --- Media Methods ---
     public void fetchMediaForEvent(String eventId) {
         _eventMediaState.postValue(new ResultWrapper.Loading<>());
         executorService.submit(() -> {
@@ -681,7 +664,6 @@ public class EventHubRepository {
         });
     }
 
-
     public void uploadMedia(MediaModel mediaToUpload, String authTokenUploader) {
         _mediaUploadOperationState.postValue(new ResultWrapper.Loading<>());
         executorService.submit(() -> {
@@ -691,39 +673,28 @@ public class EventHubRepository {
             }
             Pair<String, String> uploaderPrincipal = uploaderPrincipalOpt.get();
             String uploaderUserId = uploaderPrincipal.first;
-
             try {
-                Thread.sleep(1000); // Simulate upload time
-                if (mediaToUpload == null || mediaToUpload.getEventId() == null) { _mediaUploadOperationState.postValue(new ResultWrapper.Error<>("Upload failed: Media or Event ID missing.")); return; }
-
+                Thread.sleep(1000);
+                if (mediaToUpload == null || mediaToUpload.getEventId() == null) { _mediaUploadOperationState.postValue(new ResultWrapper.Error<>("Upload failed: Missing data.")); return; }
                 Optional<EventModel> eventOpt = findEventById(mediaToUpload.getEventId());
                 if (!eventOpt.isPresent()) { _mediaUploadOperationState.postValue(new ResultWrapper.Error<>("Upload failed: Event not found.")); return; }
-
-                // Permission: Uploader must be attending participant, event creator, or admin
                 boolean isAttendingParticipant = simulatedParticipation.stream()
                         .anyMatch(p -> mediaToUpload.getEventId().equals(p.getEventId()) &&
                                 uploaderUserId.equals(p.getAccountId()) &&
                                 "attending".equals(p.getStatus()));
                 boolean isEventCreator = uploaderUserId.equals(eventOpt.get().getCreatedBy());
-
                 if (!isAttendingParticipant && !isEventCreator && !isPrincipalAdmin(uploaderPrincipal)) {
-                    _mediaUploadOperationState.postValue(new ResultWrapper.Error<>("Permission Denied: Only attending participants, the event creator, or an admin can upload media.")); return;
+                    _mediaUploadOperationState.postValue(new ResultWrapper.Error<>("Permission Denied: Only attending participants, event creator, or admin can upload media.")); return;
                 }
-
-                mediaToUpload.setAccountId(uploaderUserId); // Set uploader ID
-                if (mediaToUpload.getMediaId() == null || mediaToUpload.getMediaId().isEmpty()) {
-                    mediaToUpload.setMediaId("media_new_" + UUID.randomUUID().toString().substring(0, 8));
-                }
+                mediaToUpload.setAccountId(uploaderUserId);
+                if (mediaToUpload.getMediaId() == null || mediaToUpload.getMediaId().isEmpty()) mediaToUpload.setMediaId("media_new_" + UUID.randomUUID().toString().substring(0,4));
                 mediaToUpload.setUploadedAt(new Date());
-
-                // Simulate generating a URL if one isn't provided (e.g. for a local file path)
-                if (mediaToUpload.getMediaFileReference() == null || mediaToUpload.getMediaFileReference().isEmpty() || !mediaToUpload.getMediaFileReference().startsWith("http")) {
+                if (mediaToUpload.getMediaFileReference() == null || !mediaToUpload.getMediaFileReference().startsWith("http")) {
                     mediaToUpload.setMediaFileReference("https://via.placeholder.com/300x200/EFEFEF/000000?Text=Img-" + mediaToUpload.getMediaId().substring(0,Math.min(mediaToUpload.getMediaId().length(), 4)));
                 }
-
                 simulatedMedia.add(mediaToUpload);
                 _mediaUploadOperationState.postValue(new ResultWrapper.Success<>(mediaToUpload));
-                fetchMediaForEvent(mediaToUpload.getEventId()); // Refresh media list for the event
+                fetchMediaForEvent(mediaToUpload.getEventId());
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 _mediaUploadOperationState.postValue(new ResultWrapper.Error<>("Media upload interrupted."));
@@ -740,31 +711,23 @@ public class EventHubRepository {
             }
             Pair<String, String> actingPrincipal = actingPrincipalOpt.get();
             String actingUserId = actingPrincipal.first;
-
             try {
                 Thread.sleep(500);
                 Optional<MediaModel> mediaOpt = simulatedMedia.stream().filter(m -> mediaId.equals(m.getMediaId())).findFirst();
                 if (!mediaOpt.isPresent()) { _voidOperationState.postValue(new ResultWrapper.Error<>("Delete failed: Media not found.")); return; }
-
                 MediaModel media = mediaOpt.get();
-                Optional<EventModel> eventOpt = findEventById(media.getEventId()); // Event context for creator check
-
-                // Permission: Media uploader, event creator, or admin can delete
+                Optional<EventModel> eventOpt = findEventById(media.getEventId());
                 boolean isUploader = actingUserId.equals(media.getAccountId());
                 boolean isEventCreator = eventOpt.isPresent() && actingUserId.equals(eventOpt.get().getCreatedBy());
-
                 if (!isUploader && !isEventCreator && !isPrincipalAdmin(actingPrincipal)) {
-                    _voidOperationState.postValue(new ResultWrapper.Error<>("Permission Denied: Only the uploader, event creator, or an admin can delete this media.")); return;
+                    _voidOperationState.postValue(new ResultWrapper.Error<>("Permission Denied: Only uploader, event creator, or admin can delete.")); return;
                 }
-
                 boolean removed = simulatedMedia.removeIf(m -> mediaId.equals(m.getMediaId()));
                 if (removed) {
                     _voidOperationState.postValue(new ResultWrapper.Success<>(null));
-                    if (eventIdToRefreshContext != null) { // Refresh media for the event context
-                        fetchMediaForEvent(eventIdToRefreshContext);
-                    }
+                    if (eventIdToRefreshContext != null) fetchMediaForEvent(eventIdToRefreshContext);
                 } else {
-                    _voidOperationState.postValue(new ResultWrapper.Error<>("Delete failed unexpectedly after finding media."));
+                    _voidOperationState.postValue(new ResultWrapper.Error<>("Delete failed unexpectedly."));
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -773,12 +736,10 @@ public class EventHubRepository {
         });
     }
 
-
-    // --- Utility / Reset ---
     public void resetSingleEventOperationState() {
         _singleEventOperationState.postValue(new ResultWrapper.Idle<>());
     }
-    public void resetVoidOperationState() {
+    public void resetVoidOperationState() { // Ensure this is public if called from VMs
         _voidOperationState.postValue(new ResultWrapper.Idle<>());
     }
     public void resetUserProfileOperationState() {
@@ -787,5 +748,4 @@ public class EventHubRepository {
     public void resetMediaUploadOperationState() {
         _mediaUploadOperationState.postValue(new ResultWrapper.Idle<>());
     }
-
 }

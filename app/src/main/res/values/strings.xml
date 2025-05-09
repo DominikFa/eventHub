@@ -145,5 +145,7 @@
     <string name="toast_login_and_select_event_to_upload">Login and select event to upload photos.</string>
     <string name="content_desc_user_profile_icon">User profile icon</string>
     <string name="content_desc_user_profile">User Profile Icon</string>
+    <string name="switch_make_event_public">Make Event Public?</string>
+
 
 </resources>

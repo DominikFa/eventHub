@@ -1,13 +1,14 @@
 package com.example.event_hub.Model;
 
 import java.util.Date;
+import java.util.Objects; // For Objects.equals in a potential future equals() override
 // Consider using java.time.LocalDateTime for more modern date/time handling if API level allows (API 26+)
 // For simplicity with potential older Android versions or broader compatibility, java.util.Date is used here.
 
 /**
  * Represents an event in the application.
  * This class holds all the details pertaining to an event,
- * such as its name, description, location, timing, and creator.
+ * such as its name, description, location, timing, creator, and public status.
  */
 public class EventModel {
 
@@ -19,13 +20,14 @@ public class EventModel {
     private Date endDate; // End date and time of the event
     private int maxParticipants; // Maximum number of participants allowed
     private String createdBy; // User ID of the event creator
-    // private UserModel createdByUser; // Alternatively, you could store the UserModel object directly if needed
+    private boolean isPublic; // New field: true if the event is public, false otherwise
 
     /**
      * Default constructor.
      * Required for some deserialization libraries (e.g., Firebase).
      */
     public EventModel() {
+        this.isPublic = true; // Default to public, can be changed by setter or constructor
     }
 
     /**
@@ -39,17 +41,20 @@ public class EventModel {
      * @param endDate         The end date and time of the event.
      * @param maxParticipants The maximum number of participants.
      * @param createdBy       The ID of the user who created the event.
+     * @param isPublic        Whether the event is public or private.
      */
     public EventModel(String id, String title, String description, String location,
-                      Date startDate, Date endDate, int maxParticipants, String createdBy) {
+                      Date startDate, Date endDate, int maxParticipants, String createdBy, boolean isPublic) {
         this.id = id;
         this.title = title;
         this.description = description;
         this.location = location;
-        this.startDate = startDate;
-        this.endDate = endDate;
+        // Defensive copies for mutable Date objects
+        this.startDate = (startDate != null) ? new Date(startDate.getTime()) : null;
+        this.endDate = (endDate != null) ? new Date(endDate.getTime()) : null;
         this.maxParticipants = maxParticipants;
         this.createdBy = createdBy;
+        this.isPublic = isPublic;
     }
 
     // Getters
@@ -70,11 +75,13 @@ public class EventModel {
     }
 
     public Date getStartDate() {
-        return startDate;
+        // Return a defensive copy to protect internal state
+        return startDate != null ? new Date(startDate.getTime()) : null;
     }
 
     public Date getEndDate() {
-        return endDate;
+        // Return a defensive copy
+        return endDate != null ? new Date(endDate.getTime()) : null;
     }
 
     public int getMaxParticipants() {
@@ -83,6 +90,10 @@ public class EventModel {
 
     public String getCreatedBy() {
         return createdBy;
+    }
+
+    public boolean isPublic() {
+        return isPublic;
     }
 
     // Setters
@@ -103,11 +114,13 @@ public class EventModel {
     }
 
     public void setStartDate(Date startDate) {
-        this.startDate = startDate;
+        // Store a defensive copy
+        this.startDate = (startDate != null) ? new Date(startDate.getTime()) : null;
     }
 
     public void setEndDate(Date endDate) {
-        this.endDate = endDate;
+        // Store a defensive copy
+        this.endDate = (endDate != null) ? new Date(endDate.getTime()) : null;
     }
 
     public void setMaxParticipants(int maxParticipants) {
@@ -116,6 +129,10 @@ public class EventModel {
 
     public void setCreatedBy(String createdBy) {
         this.createdBy = createdBy;
+    }
+
+    public void setPublic(boolean isPublic) {
+        this.isPublic = isPublic;
     }
 
     /**
@@ -128,28 +145,26 @@ public class EventModel {
         return "EventModel{" +
                 "id='" + id + '\'' +
                 ", title='" + title + '\'' +
-                ", description='" + (description != null ? description.substring(0, Math.min(description.length(), 50)) + "..." : "N/A") + '\'' + // Truncate description for brevity
+                ", description='" + (description != null ? description.substring(0, Math.min(description.length(), 50)) + "..." : "N/A") + '\'' +
                 ", location='" + location + '\'' +
                 ", startDate=" + startDate +
                 ", endDate=" + endDate +
                 ", maxParticipants=" + maxParticipants +
                 ", createdBy='" + createdBy + '\'' +
+                ", isPublic=" + isPublic +
                 '}';
     }
 
-    // Consider adding equals() and hashCode() methods if you plan to store EventModel objects
-    // in collections like HashSets or use them as keys in HashMaps.
-    // For example:
-    // @Override
-    // public boolean equals(Object o) {
-    //     if (this == o) return true;
-    //     if (o == null || getClass() != o.getClass()) return false;
-    //     EventModel that = (EventModel) o;
-    //     return id.equals(that.id); // Assuming ID is unique and sufficient for equality
-    // }
-    //
-    // @Override
-    // public int hashCode() {
-    //     return id.hashCode(); // Assuming ID is unique
-    // }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        EventModel that = (EventModel) o;
+        return Objects.equals(id, that.id); // Primary key equality
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id); // Primary key hashcode
+    }
 }

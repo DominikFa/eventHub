@@ -56,120 +56,12 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:fontFamily="@font/jaro_custom"
-                android:text="Utwórz wydarzenie"
+                android:text="@string/create_event_title_navbar"
                 android:textColor="@android:color/white"
                 android:textSize="40sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_select_event_start_date"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="Wybierz datę rozpoczęcia"
-                android:textColor="@color/event_hub_text_primary_create"
-                app:icon="@drawable/ic_calendar"
-                app:iconTint="@color/event_hub_text_primary_create"
-                app:strokeColor="@color/event_hub_text_primary_create"
-                app:cornerRadius="20dp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tv_create_event_screen_title" />
-
-            <TextView
-                android:id="@+id/tv_selected_event_start_date"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:textColor="@color/event_hub_text_secondary_create"
-                android:textSize="16sp"
-                tools:text="Wybrana data rozpoczęcia: 25 Maj, 2025"
-                app:layout_constraintStart_toStartOf="@id/btn_select_event_start_date"
-                app:layout_constraintTop_toBottomOf="@id/btn_select_event_start_date"/>
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_select_event_start_time"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Wybierz godzinę rozpoczęcia"
-                android:textColor="@color/event_hub_text_primary_create"
-                app:icon="@drawable/ic_time"
-                app:iconTint="@color/event_hub_text_primary_create"
-                app:strokeColor="@color/event_hub_text_primary_create"
-                app:cornerRadius="20dp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tv_selected_event_start_date" />
-
-            <TextView
-                android:id="@+id/tv_selected_event_start_time"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:textColor="@color/event_hub_text_secondary_create"
-                android:textSize="16sp"
-                tools:text="Wybrana godzina rozpoczęcia: 20:00"
-                app:layout_constraintStart_toStartOf="@id/btn_select_event_start_time"
-                app:layout_constraintTop_toBottomOf="@id/btn_select_event_start_time"/>
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_select_event_end_date"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Wybierz datę zakończenia"
-                android:textColor="@color/event_hub_text_primary_create"
-                app:icon="@drawable/ic_calendar"
-                app:iconTint="@color/event_hub_text_primary_create"
-                app:strokeColor="@color/event_hub_text_primary_create"
-                app:cornerRadius="20dp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tv_selected_event_start_time" />
-
-            <TextView
-                android:id="@+id/tv_selected_event_end_date"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:textColor="@color/event_hub_text_secondary_create"
-                android:textSize="16sp"
-                tools:text="Wybrana data zakończenia: 25 Maj, 2025"
-                app:layout_constraintStart_toStartOf="@id/btn_select_event_end_date"
-                app:layout_constraintTop_toBottomOf="@id/btn_select_event_end_date"/>
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_select_event_end_time"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Wybierz godzinę zakończenia"
-                android:textColor="@color/event_hub_text_primary_create"
-                app:icon="@drawable/ic_time"
-                app:iconTint="@color/event_hub_text_primary_create"
-                app:strokeColor="@color/event_hub_text_primary_create"
-                app:cornerRadius="20dp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tv_selected_event_end_date" />
-
-            <TextView
-                android:id="@+id/tv_selected_event_end_time"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:textColor="@color/event_hub_text_secondary_create"
-                android:textSize="16sp"
-                tools:text="Wybrana godzina zakończenia: 22:00"
-                app:layout_constraintStart_toStartOf="@id/btn_select_event_end_time"
-                app:layout_constraintTop_toBottomOf="@id/btn_select_event_end_time"/>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/til_event_name_create"
@@ -177,7 +69,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:hint="Nazwa wydarzenia"
+                android:hint="@string/hint_event_name"
                 app:boxBackgroundColor="@color/event_hub_text_field_background_create"
                 app:boxCornerRadiusTopStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
@@ -186,7 +78,7 @@
                 app:hintTextColor="@color/event_hub_text_field_hint_create"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tv_selected_event_end_time">
+                app:layout_constraintTop_toBottomOf="@id/tv_create_event_screen_title">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_event_name_create"
@@ -203,7 +95,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:hint="Opis wydarzenia"
+                android:hint="@string/hint_event_description"
                 app:boxBackgroundColor="@color/event_hub_text_field_background_create"
                 app:boxCornerRadiusTopStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
@@ -226,13 +118,127 @@
                     android:textSize="16sp" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_select_event_start_date"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/button_select_start_date"
+                android:textColor="@color/event_hub_text_primary_create"
+                app:icon="@drawable/ic_calendar"
+                app:iconTint="@color/event_hub_text_primary_create"
+                app:strokeColor="@color/event_hub_text_primary_create"
+                app:cornerRadius="20dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/guideline_vertical_event_create"
+                app:layout_constraintTop_toBottomOf="@id/til_event_description_create"
+                android:layout_marginEnd="4dp"/>
+
+            <TextView
+                android:id="@+id/tv_selected_event_start_date"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="@color/event_hub_text_secondary_create"
+                android:textSize="14sp"
+                tools:text="Date: 25 May, 2025"
+                app:layout_constraintStart_toStartOf="@id/btn_select_event_start_date"
+                app:layout_constraintEnd_toEndOf="@id/btn_select_event_start_date"
+                app:layout_constraintTop_toBottomOf="@id/btn_select_event_start_date"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_select_event_start_time"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="@string/button_select_start_time"
+                android:textColor="@color/event_hub_text_primary_create"
+                app:icon="@drawable/ic_time"
+                app:iconTint="@color/event_hub_text_primary_create"
+                app:strokeColor="@color/event_hub_text_primary_create"
+                app:cornerRadius="20dp"
+                app:layout_constraintStart_toEndOf="@+id/guideline_vertical_event_create"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@id/btn_select_event_start_date"
+                android:layout_marginStart="4dp"/>
+
+            <TextView
+                android:id="@+id/tv_selected_event_start_time"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="@color/event_hub_text_secondary_create"
+                android:textSize="14sp"
+                tools:text="Time: 20:00"
+                app:layout_constraintStart_toStartOf="@id/btn_select_event_start_time"
+                app:layout_constraintEnd_toEndOf="@id/btn_select_event_start_time"
+                app:layout_constraintTop_toBottomOf="@id/btn_select_event_start_time"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_select_event_end_date"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/button_select_end_date"
+                android:textColor="@color/event_hub_text_primary_create"
+                app:icon="@drawable/ic_calendar"
+                app:iconTint="@color/event_hub_text_primary_create"
+                app:strokeColor="@color/event_hub_text_primary_create"
+                app:cornerRadius="20dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/guideline_vertical_event_create"
+                app:layout_constraintTop_toBottomOf="@id/tv_selected_event_start_date"
+                android:layout_marginEnd="4dp"/>
+
+            <TextView
+                android:id="@+id/tv_selected_event_end_date"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="@color/event_hub_text_secondary_create"
+                android:textSize="14sp"
+                tools:text="Date: 25 May, 2025"
+                app:layout_constraintStart_toStartOf="@id/btn_select_event_end_date"
+                app:layout_constraintEnd_toEndOf="@id/btn_select_event_end_date"
+                app:layout_constraintTop_toBottomOf="@id/btn_select_event_end_date"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_select_event_end_time"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="@string/button_select_end_time"
+                android:textColor="@color/event_hub_text_primary_create"
+                app:icon="@drawable/ic_time"
+                app:iconTint="@color/event_hub_text_primary_create"
+                app:strokeColor="@color/event_hub_text_primary_create"
+                app:cornerRadius="20dp"
+                app:layout_constraintStart_toEndOf="@+id/guideline_vertical_event_create"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@id/btn_select_event_end_date"
+                android:layout_marginStart="4dp"/>
+
+            <TextView
+                android:id="@+id/tv_selected_event_end_time"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="@color/event_hub_text_secondary_create"
+                android:textSize="14sp"
+                tools:text="Time: 22:00"
+                app:layout_constraintStart_toStartOf="@id/btn_select_event_end_time"
+                app:layout_constraintEnd_toEndOf="@id/btn_select_event_end_time"
+                app:layout_constraintTop_toBottomOf="@id/btn_select_event_end_time"/>
+
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/til_event_location_create"
                 style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:hint="Lokalizacja wydarzenia"
+                android:hint="@string/hint_event_location"
                 app:boxBackgroundColor="@color/event_hub_text_field_background_create"
                 app:boxCornerRadiusTopStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
@@ -241,15 +247,13 @@
                 app:hintTextColor="@color/event_hub_text_field_hint_create"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/til_event_description_create">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/et_event_location_create"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="textCapSentences"
-                    android:textColor="@color/event_hub_text_input_create"
-                    android:textSize="16sp" />
+                app:layout_constraintTop_toBottomOf="@id/tv_selected_event_end_date"> <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_event_location_create"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textCapSentences"
+                android:textColor="@color/event_hub_text_input_create"
+                android:textSize="16sp" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -258,7 +262,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:hint="Maks. uczestników"
+                android:hint="@string/hint_max_participants"
                 app:boxBackgroundColor="@color/event_hub_text_field_background_create"
                 app:boxCornerRadiusTopStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
@@ -278,32 +282,51 @@
                     android:textSize="16sp" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switch_event_public_create"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/switch_make_event_public"
+                android:textColor="@color/event_hub_text_secondary_create"
+                android:checked="true"
+                app:thumbTint="@color/event_hub_purple_primary_create"
+                app:trackTint="@color/event_hub_text_field_background_create"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/til_event_max_participants_create"/>
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_add_event_photos"
                 style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Dodaj zdjęcia"
+                android:layout_marginTop="8dp"
+                android:text="@string/button_add_photos"
                 android:textColor="@color/event_hub_purple_primary_main"
                 app:icon="@drawable/ic_add_photo"
                 app:iconTint="@color/event_hub_purple_primary_main"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/til_event_max_participants_create"/>
+                app:layout_constraintTop_toBottomOf="@id/switch_event_public_create"
+                android:visibility="gone" /> <ProgressBar
+            android:id="@+id/pb_create_event_loading"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/btn_add_event_photos"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginBottom="16dp"
+            tools:visibility="visible"/>
 
-            <ProgressBar
-                android:id="@+id/pb_create_event_loading"
-                style="?android:attr/progressBarStyle"
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guideline_vertical_event_create"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:visibility="gone"
-                app:layout_constraintTop_toBottomOf="@id/btn_add_event_photos"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                android:layout_marginBottom="16dp"
-                tools:visibility="visible"/>
+                android:orientation="vertical"
+                app:layout_constraintGuide_percent="0.5"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>
@@ -315,10 +338,10 @@
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
-        android:background="@drawable/button_purple_gradient_rectangular"
+        android:backgroundTint="@color/event_hub_button_purple_gradient_register"
         android:paddingTop="16dp"
         android:paddingBottom="16dp"
-        android:text="Utwórz"
+        android:text="@string/button_create_event_submit"
         android:textAllCaps="false"
         android:textColor="@android:color/white"
         android:textSize="18sp"
