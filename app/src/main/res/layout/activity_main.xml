@@ -2,21 +2,62 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main_activity_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.event_hub.View.MainActivity">
+    android:background="@color/event_hub_main_background_main_screen"
+    tools:context="com.example.event_hub.MainActivity"> <TextView
+    android:id="@+id/tv_app_title_main"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="24dp"
+    android:layout_marginTop="24dp"
+    android:fontFamily="@font/jaro_custom"
+    android:text="@string/main_fragment_title"
+    android:textColor="@android:color/white"
+    android:textSize="48sp"
+    app:layout_constraintEnd_toStartOf="@+id/btn_profile_or_login_main"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageButton
+        android:id="@+id/btn_profile_or_login_main"
+        android:layout_width="58dp"
+        android:layout_height="58dp"
+        android:layout_marginEnd="24dp"
+        android:background="@drawable/button_purple_gradient_rounded"
+        android:contentDescription="@string/content_desc_profile_or_login_button"
+        android:padding="12dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_login"
+        app:layout_constraintBottom_toBottomOf="@id/tv_app_title_main"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/tv_app_title_main"
+        app:tint="@android:color/white" />
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/nav_host_fragment_content_main"
         android:name="androidx.navigation.fragment.NavHostFragment"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:layout_marginTop="16dp"
         app:defaultNavHost="true"
+        app:layout_constraintBottom_toTopOf="@+id/bottom_navigation_main"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_app_title_main"
+        app:navGraph="@navigation/nav_graph" />
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_navigation_main"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="?android:attr/windowBackground"
+        app:itemIconTint="@color/bottom_nav_item_color_selector"
+        app:itemTextColor="@color/bottom_nav_item_color_selector"
+        app:labelVisibilityMode="labeled"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/nav_graph" />
+        app:menu="@menu/bottom_navigation_menu" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -23,14 +23,14 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/til_search_users_invite"
+        android:id="@+id/til_search_by_name_invite"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
-        android:hint="@string/search_users_hint"
+        android:hint="@string/search_users_by_name_hint"
         app:boxStrokeColor="@color/event_hub_purple_primary_profile"
         app:hintTextColor="@color/event_hub_purple_primary_profile"
         app:layout_constraintEnd_toEndOf="parent"
@@ -38,12 +38,49 @@
         app:layout_constraintTop_toBottomOf="@id/tv_invite_users_title">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/et_search_users_invite"
+            android:id="@+id/et_search_by_name_invite"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="text"
             android:textColor="@color/event_hub_text_value_profile" />
     </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/til_search_by_login_invite"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
+        android:hint="@string/search_users_by_login_hint"
+        app:boxStrokeColor="@color/event_hub_purple_primary_profile"
+        app:hintTextColor="@color/event_hub_purple_primary_profile"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/til_search_by_name_invite">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/et_search_by_login_invite"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textEmailAddress"
+            android:textColor="@color/event_hub_text_value_profile" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_apply_user_filters"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:backgroundTint="@color/event_hub_button_purple_solid_main"
+        android:text="@string/apply_filters_button"
+        android:textColor="@android:color/white"
+        app:cornerRadius="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/til_search_by_login_invite" />
 
     <ProgressBar
         android:id="@+id/pb_invite_users_loading"
@@ -52,7 +89,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/til_search_users_invite"
+        app:layout_constraintTop_toBottomOf="@id/btn_apply_user_filters"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         tools:visibility="visible"/>

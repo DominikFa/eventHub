@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.event_hub.Model.EventModel;
-import com.example.event_hub.R; // Ensure this is your project's R file
+import com.example.event_hub.R;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
     }
 
     public EventAdapter(List<EventModel> initialEventList, OnEventClickListener onEventClickListener) {
-        this.eventList = new ArrayList<>(initialEventList); // Work with a copy
+        this.eventList = new ArrayList<>(initialEventList);
         this.onEventClickListener = onEventClickListener;
     }
 
@@ -37,7 +37,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
     @Override
     public EventViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_event_card, parent, false); // Use your item_event_card.xml
+                .inflate(R.layout.item_event_card, parent, false);
         return new EventViewHolder(view);
     }
 
@@ -63,7 +63,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
 
     static class EventViewHolder extends RecyclerView.ViewHolder {
         TextView tvEventTitle, tvEventDescription, tvEventDate, tvEventLocation;
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM, yyyy", Locale.getDefault());
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault());
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
 
 
@@ -76,7 +76,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         }
 
         public void bind(final EventModel event, final OnEventClickListener clickListener) {
-            tvEventTitle.setText(event.getTitle());
+            tvEventTitle.setText(event.getName());
             tvEventDescription.setText(event.getDescription());
 
             String dateString = itemView.getContext().getString(R.string.not_available_placeholder);
@@ -84,7 +84,8 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
                 dateString = dateFormat.format(event.getStartDate());
                 if (event.getEndDate() != null && !isSameDay(event.getStartDate(), event.getEndDate())) {
                     dateString += " - " + dateFormat.format(event.getEndDate());
-                } else if (event.getStartDate() != null){ // Single day event, add time
+                } else if (event.getStartDate() != null){
+                    dateString = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(event.getStartDate());
                     dateString += ", " + timeFormat.format(event.getStartDate());
                     if (event.getEndDate() != null) {
                         dateString += " - " + timeFormat.format(event.getEndDate());
@@ -93,8 +94,8 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             }
             tvEventDate.setText(dateString);
 
-            if (event.getLocation() != null && !event.getLocation().isEmpty()) {
-                tvEventLocation.setText(event.getLocation());
+            if (event.getLocation() != null && event.getLocation().getFullAddress() != null && !event.getLocation().getFullAddress().isEmpty()) {
+                tvEventLocation.setText(event.getLocation().getFullAddress());
                 tvEventLocation.setVisibility(View.VISIBLE);
             } else {
                 tvEventLocation.setVisibility(View.GONE);
@@ -141,7 +142,6 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
 
         @Override
         public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
-            // Assuming EventModel has a unique ID and a proper equals() method for it
             return oldList.get(oldItemPosition).getId().equals(newList.get(newItemPosition).getId());
         }
 
@@ -149,8 +149,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
             EventModel oldEvent = oldList.get(oldItemPosition);
             EventModel newEvent = newList.get(newItemPosition);
-            // Implement a more comprehensive equals in EventModel or compare relevant fields here
-            return Objects.equals(oldEvent.getTitle(), newEvent.getTitle()) &&
+            return Objects.equals(oldEvent.getName(), newEvent.getName()) &&
                     Objects.equals(oldEvent.getDescription(), newEvent.getDescription()) &&
                     Objects.equals(oldEvent.getLocation(), newEvent.getLocation()) &&
                     Objects.equals(oldEvent.getStartDate(), newEvent.getStartDate()) &&
@@ -160,7 +159,6 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         @Nullable
         @Override
         public Object getChangePayload(int oldItemPosition, int newItemPosition) {
-            // Optional: Implement for more granular updates
             return super.getChangePayload(oldItemPosition, newItemPosition);
         }
     }

@@ -1,32 +1,20 @@
 package com.example.event_hub.Model;
 
-// Updated AuthResponse model to include a JWT token
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class AuthResponse {
     private boolean success;
     private String message;
-    private String userId;
-    private String token; // JWT Token
+    private UserModel user; // Changed from userId to the full user object from API doc
+    private String token;
 
-    public AuthResponse(boolean success, String message, String userId, String token) {
+    public AuthResponse(boolean success, String message, UserModel user, String token) {
         this.success = success;
         this.message = message;
-        this.userId = userId;
+        this.user = user;
         this.token = token;
-    }
-
-    public boolean isSuccess() {
-        return success;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public String getToken() {
-        return token;
     }
 }

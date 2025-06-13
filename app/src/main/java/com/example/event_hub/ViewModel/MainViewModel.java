@@ -1,158 +1,150 @@
+// src/main/java/com/example/event_hub/ViewModel/MainViewModel.java
 package com.example.event_hub.ViewModel;
 
+import android.app.Application;
+import androidx.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MediatorLiveData;
-import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModel;
-import androidx.lifecycle.Transformations;
-
-
-import com.example.event_hub.Model.EventHubRepository;
+import androidx.lifecycle.MediatorLiveData; // Import MediatorLiveData
+import com.example.event_hub.Repositiry.AuthRepository;
+import com.example.event_hub.Repositiry.EventHubRepository;
 import com.example.event_hub.Model.EventModel;
-import com.example.event_hub.Model.UserModel; // Assuming UserModel might be needed for creator info
-import com.example.event_hub.Model.ResultWrapper; // Ensure this import path is correct
-
+import com.example.event_hub.Model.EventSummary;
+import com.example.event_hub.Model.PaginatedResponse;
+import com.example.event_hub.Model.ResultWrapper;
+import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
-public class MainViewModel extends ViewModel {
+public class MainViewModel extends AndroidViewModel {
 
     private final EventHubRepository eventHubRepository;
+    private final AuthRepository authRepository; // Added AuthRepository
 
-    // LiveData for the list of public events
-    private final MediatorLiveData<ResultWrapper<List<EventModel>>> _publicEventsState = new MediatorLiveData<>();
-    public LiveData<ResultWrapper<List<EventModel>>> publicEventsState = _publicEventsState;
-
-    // LiveData for the list of events attended by the current user
-    // This needs a trigger, e.g., userId. Using switchMap for this.
-    private final MutableLiveData<String> _userIdForAttendedEvents = new MutableLiveData<>();
-    public LiveData<ResultWrapper<List<EventModel>>> attendedEventsState;
+    // Changed to MediatorLiveData for transformation
+    public final MediatorLiveData<ResultWrapper<List<EventModel>>> publicEventsState = new MediatorLiveData<>();
+    public final MediatorLiveData<ResultWrapper<List<EventModel>>> attendedEventsState = new MediatorLiveData<>();
+    public final MediatorLiveData<ResultWrapper<List<EventModel>>> myCreatedEventsState = new MediatorLiveData<>();
 
 
-    // LiveData for the status of joining an event
-    public LiveData<ResultWrapper<Void>> joinEventOperationState; // Observe directly from repo
-
-    // LiveData for a single event when its details are requested or it's "selected"
-    private final MediatorLiveData<ResultWrapper<EventModel>> _selectedEventState = new MediatorLiveData<>();
-    public LiveData<ResultWrapper<EventModel>> selectedEventState = _selectedEventState;
-
-    private Observer<ResultWrapper<Void>> joinEventObserver;
-
-
-    public MainViewModel() {
+    public MainViewModel(@NonNull Application application) {
+        super(application);
         eventHubRepository = EventHubRepository.getInstance();
+        authRepository = AuthRepository.getInstance(); // Initialize AuthRepository
 
-        // Observe public events from repository
-        _publicEventsState.addSource(eventHubRepository.publicEventsState, new Observer<ResultWrapper<List<EventModel>>>() {
-            @Override
-            public void onChanged(ResultWrapper<List<EventModel>> listResultWrapper) {
-                _publicEventsState.setValue(listResultWrapper);
+        // Source from repository's publicEventsState and map to EventModel list
+        publicEventsState.addSource(eventHubRepository.publicEventsState, resultWrapper -> {
+            if (resultWrapper instanceof ResultWrapper.Success) {
+                PaginatedResponse<EventSummary> response = ((ResultWrapper.Success<PaginatedResponse<EventSummary>>) resultWrapper).getData();
+                List<EventSummary> summaries = (response != null && response.getContent() != null) ? response.getContent() : null;
+
+                List<EventModel> eventModels = null;
+                if (summaries != null) {
+                    eventModels = summaries.stream().map(summary -> {
+                        EventModel model = new EventModel();
+                        model.setId(summary.getId());
+                        model.setName(summary.getName());
+                        model.setStartDate(summary.getStartDate());
+                        model.setEndDate(summary.getEndDate());
+                        return model;
+                    }).collect(Collectors.toList());
+                }
+                publicEventsState.setValue(new ResultWrapper.Success<>(eventModels));
+            } else if (resultWrapper instanceof ResultWrapper.Error) {
+                publicEventsState.setValue(new ResultWrapper.Error<>(((ResultWrapper.Error<?>) resultWrapper).getMessage()));
+            } else if (resultWrapper instanceof ResultWrapper.Loading) {
+                publicEventsState.setValue(new ResultWrapper.Loading<>());
+            } else if (resultWrapper instanceof ResultWrapper.Idle) {
+                publicEventsState.setValue(new ResultWrapper.Idle<>());
             }
         });
 
-        // Setup attendedEventsState to react to _userIdForAttendedEvents changes
-        attendedEventsState = Transformations.switchMap(_userIdForAttendedEvents, userId -> {
-            if (userId == null || userId.isEmpty()) {
-                MutableLiveData<ResultWrapper<List<EventModel>>> emptyResult = new MutableLiveData<>();
-                emptyResult.setValue(new ResultWrapper.Error<>("User ID not provided for attended events."));
-                return emptyResult;
-            }
-            // This call returns a new LiveData instance each time from the repo
-            return eventHubRepository.fetchAttendedEvents(userId);
-        });
-
-        joinEventOperationState = eventHubRepository.voidOperationState; // For join event
-
-        // Observer for the selected event details from the repository
-        _selectedEventState.addSource(eventHubRepository.singleEventOperationState, new Observer<ResultWrapper<EventModel>>() {
-            @Override
-            public void onChanged(ResultWrapper<EventModel> eventModelResultWrapper) {
-                // This will reflect the state of the last fetchEventDetails or createEvent call
-                _selectedEventState.setValue(eventModelResultWrapper);
+        // Source from repository's attendedEventsState
+        attendedEventsState.addSource(eventHubRepository.attendedEventsState, resultWrapper -> {
+            if (resultWrapper instanceof ResultWrapper.Success) {
+                PaginatedResponse<EventModel> response = ((ResultWrapper.Success<PaginatedResponse<EventModel>>) resultWrapper).getData();
+                attendedEventsState.setValue(new ResultWrapper.Success<>((response != null) ? response.getContent() : null));
+            } else if (resultWrapper instanceof ResultWrapper.Error) {
+                attendedEventsState.setValue(new ResultWrapper.Error<>(((ResultWrapper.Error<?>) resultWrapper).getMessage()));
+            } else if (resultWrapper instanceof ResultWrapper.Loading) {
+                attendedEventsState.setValue(new ResultWrapper.Loading<>());
+            } else if (resultWrapper instanceof ResultWrapper.Idle) {
+                attendedEventsState.setValue(new ResultWrapper.Idle<>());
             }
         });
+
+        // Source from repository's myCreatedEventsState
+        myCreatedEventsState.addSource(eventHubRepository.myCreatedEventsState, resultWrapper -> {
+            if (resultWrapper instanceof ResultWrapper.Success) {
+                PaginatedResponse<EventModel> response = ((ResultWrapper.Success<PaginatedResponse<EventModel>>) resultWrapper).getData();
+                myCreatedEventsState.setValue(new ResultWrapper.Success<>((response != null) ? response.getContent() : null));
+            } else if (resultWrapper instanceof ResultWrapper.Error) {
+                myCreatedEventsState.setValue(new ResultWrapper.Error<>(((ResultWrapper.Error<?>) resultWrapper).getMessage()));
+            } else if (resultWrapper instanceof ResultWrapper.Loading) {
+                myCreatedEventsState.setValue(new ResultWrapper.Loading<>());
+            } else if (resultWrapper instanceof ResultWrapper.Idle) {
+                myCreatedEventsState.setValue(new ResultWrapper.Idle<>());
+            }
+        });
     }
 
     /**
-     * Fetches all public events. Call this to initiate or refresh.
+     * Fetches public events with pagination, filtering, and sorting.
+     * @param page The page number (0-indexed).
+     * @param size The number of items per page.
+     * @param name Optional: Filter by event name.
+     * @param startDate Optional: Filter by events starting on or after this date.
+     * @param endDate Optional: Filter by events ending on or before this date.
+     * @param sort Optional: List of sorting criteria (e.g., "name,asc", "startDate,desc").
      */
-    public void loadPublicEvents() {
-        System.out.println("MainViewModel: Loading public events...");
-        _publicEventsState.setValue(new ResultWrapper.Loading<>()); // Optionally show loading in VM immediately
-        eventHubRepository.fetchPublicEvents();
+    public void loadPublicEvents(int page, int size, String name, Date startDate, Date endDate, List<String> sort) {
+        eventHubRepository.fetchPublicEvents(page, size, name, startDate, endDate, sort);
     }
 
     /**
-     * Fetches events attended by the current user.
-     * @param userId The ID of the current user.
+     * Fetches events the current user is participating in with pagination, filtering, and sorting.
+     * The user is identified by the JWT provided by the AuthRepository.
+     * @param page The page number (0-indexed).
+     * @param size The number of items per page.
+     * @param name Optional: Filter by event name.
+     * @param startDate Optional: Filter by events starting on or after this date.
+     * @param endDate Optional: Filter by events ending on or before this date.
+     * @param sort Optional: List of sorting criteria (e.g., "name,asc", "startDate,desc").
      */
-    public void loadAttendedEvents(String userId) {
-        if (userId == null || userId.isEmpty()) {
-            // attendedEventsState will show error due to switchMap logic
-            _userIdForAttendedEvents.setValue(null); // Trigger switchMap to handle error state
-            System.out.println("MainViewModel: Cannot fetch attended events: User ID is missing.");
-            return;
+    public void loadAttendedEvents(int page, int size, String name, Date startDate, Date endDate, List<String> sort) {
+        String authToken = authRepository.getCurrentTokenSynchronous();
+        if (authToken != null) {
+            eventHubRepository.fetchMyParticipatedEvents(authToken, page, size, name, startDate, endDate, sort);
+        } else {
+            attendedEventsState.postValue(new ResultWrapper.Error<>("Authentication required to fetch attended events."));
         }
-        System.out.println("MainViewModel: Loading attended events for userId: " + userId);
-        _userIdForAttendedEvents.setValue(userId); // This will trigger the switchMap
     }
 
     /**
-     * Allows a user to join a public event.
-     * @param eventId The ID of the event to join.
-     * @param userId  The ID of the user joining the event.
+     * Fetches events created by the current user with pagination, filtering, and sorting.
+     * The user is identified by the JWT provided by the AuthRepository.
+     * @param page The page number (0-indexed).
+     * @param size The number of items per page.
+     * @param name Optional: Filter by event name.
+     * @param startDate Optional: Filter by events starting on or after this date.
+     * @param endDate Optional: Filter by events ending on or before this date.
+     * @param sort Optional: List of sorting criteria (e.g., "name,asc", "startDate,desc").
      */
-    public void joinPublicEvent(String eventId, String userId) {
-        if (eventId == null || eventId.isEmpty() || userId == null || userId.isEmpty()) {
-            // Handle this error locally if joinEventOperationState isn't suitable,
-            // or let the repo handle it if it checks parameters.
-            // For now, let's assume repo checks.
-            System.err.println("MainViewModel: Event ID or User ID is missing for join event.");
-            // If you want to post to joinEventOperationState directly:
-            // MutableLiveData<ResultWrapper<Void>> errorResult = new MutableLiveData<>();
-            // errorResult.setValue(new ResultWrapper.Error<>("Event ID or User ID missing."));
-            // joinEventOperationState = errorResult; // This replaces the repo's LiveData, be careful.
-            // Better to have a dedicated _joinEventActionState in VM if such local validation is needed.
-            return;
+    public void loadCreatedEvents(int page, int size, String name, Date startDate, Date endDate, List<String> sort) {
+        String authToken = authRepository.getCurrentTokenSynchronous();
+        if (authToken != null) {
+            eventHubRepository.fetchMyCreatedEvents(authToken, page, size, name, startDate, endDate, sort);
+        } else {
+            myCreatedEventsState.postValue(new ResultWrapper.Error<>("Authentication required to fetch created events."));
         }
-        System.out.println("MainViewModel: User " + userId + " attempting to join event " + eventId);
-        // UI will observe joinEventOperationState (which is eventHubRepository.voidOperationState)
-        eventHubRepository.joinPublicEvent(eventId, userId);
-        // After a successful join, the attended events list should be refreshed.
-        // The repository's joinPublicEvent doesn't currently refresh attended events.
-        // It might be better if it did, or the ViewModel can trigger it here on success.
-        // For now, manual refresh might be needed by calling loadAttendedEvents(userId) on success from UI.
     }
-
-    /**
-     * Fetches details for a specific event.
-     * The result is observed on selectedEventState.
-     * @param eventId The ID of the event to fetch details for.
-     */
-    public void loadEventDetails(String eventId) {
-        if (eventId == null || eventId.isEmpty()) {
-            _selectedEventState.setValue(new ResultWrapper.Error<>("Event ID is missing for fetching details."));
-            return;
-        }
-        System.out.println("MainViewModel: Loading details for event " + eventId);
-        _selectedEventState.setValue(new ResultWrapper.Loading<>()); // Show loading in VM immediately
-        eventHubRepository.fetchEventDetails(eventId);
-    }
-
-    /**
-     * Clears the selected event state, e.g., when navigating away from a detail view.
-     */
-    public void clearSelectedEvent() {
-        _selectedEventState.setValue(new ResultWrapper.Idle<>());
-    }
-
 
     @Override
     protected void onCleared() {
         super.onCleared();
-        _publicEventsState.removeSource(eventHubRepository.publicEventsState);
-        _selectedEventState.removeSource(eventHubRepository.singleEventOperationState);
-        // No need to remove source for attendedEventsState as switchMap handles lifecycle
-        System.out.println("MainViewModel: Cleared.");
+        // Remove sources to prevent memory leaks when ViewModel is cleared
+        publicEventsState.removeSource(eventHubRepository.publicEventsState);
+        attendedEventsState.removeSource(eventHubRepository.attendedEventsState);
+        myCreatedEventsState.removeSource(eventHubRepository.myCreatedEventsState);
     }
 }

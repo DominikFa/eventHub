@@ -5,33 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/event_hub_main_background_create"
-    tools:context="com.example.event_hub.View.CreateEventFragment">
-
-    <TextView
-        android:id="@+id/tv_app_title_create_event"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="24dp"
-        android:fontFamily="@font/jaro_custom"
-        android:text="EventHub"
-        android:textColor="@android:color/white"
-        android:textSize="48sp"
-        app:layout_constraintEnd_toStartOf="@+id/iv_user_icon_create_event"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <ImageView
-        android:id="@+id/iv_user_icon_create_event"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_marginEnd="24dp"
-        android:src="@drawable/ic_profile"
-        android:contentDescription="@string/content_desc_user_profile"
-        app:tint="@android:color/white"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/tv_app_title_create_event"
-        app:layout_constraintBottom_toBottomOf="@id/tv_app_title_create_event" />
+    tools:context=".View.CreateEventFragment">
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/nsv_create_event_content"
@@ -42,7 +16,7 @@
         app:layout_constraintBottom_toTopOf="@+id/btn_create_event_submit"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tv_app_title_create_event"
+        app:layout_constraintTop_toTopOf="parent"
         android:fillViewport="true">
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -118,6 +92,305 @@
                     android:textSize="16sp" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <RadioGroup
+                android:id="@+id/rg_location_type"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="horizontal"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/til_event_description_create">
+
+                <RadioButton
+                    android:id="@+id/rb_new_location"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/radio_new_location"
+                    android:checked="true"
+                    android:textColor="@android:color/white"
+                    android:buttonTint="@color/event_hub_purple_primary_create"/>
+
+                <RadioButton
+                    android:id="@+id/rb_existing_location"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/radio_existing_location"
+                    android:textColor="@android:color/white"
+                    android:buttonTint="@color/event_hub_purple_primary_create"/>
+            </RadioGroup>
+
+            <LinearLayout
+                android:id="@+id/ll_new_location_inputs"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="vertical"
+                android:visibility="visible"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/rg_location_type">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/til_street_name_create"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/hint_street_name"
+                    app:boxBackgroundColor="@color/event_hub_text_field_background_create"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusBottomEnd="12dp"
+                    app:hintTextColor="@color/event_hub_text_field_hint_create">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_street_name_create"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textCapWords"
+                        android:textColor="@color/event_hub_text_input_create"
+                        android:textSize="16sp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="16dp"> <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/til_street_number_create"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp" android:hint="@string/hint_street_number"
+                    app:boxBackgroundColor="@color/event_hub_text_field_background_create"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusBottomEnd="12dp"
+                    app:hintTextColor="@color/event_hub_text_field_hint_create">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_street_number_create"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="text"
+                        android:textColor="@color/event_hub_text_input_create"
+                        android:textSize="16sp" />
+                </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/til_apartment_create"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:hint="@string/hint_apartment"
+                        app:boxBackgroundColor="@color/event_hub_text_field_background_create"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:hintTextColor="@color/event_hub_text_field_hint_create">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/et_apartment_create"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="text"
+                            android:textColor="@color/event_hub_text_input_create"
+                            android:textSize="16sp" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/til_postal_code_create"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp" android:hint="@string/hint_postal_code"
+                    app:boxBackgroundColor="@color/event_hub_text_field_background_create"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusBottomEnd="12dp"
+                    app:hintTextColor="@color/event_hub_text_field_hint_create">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_postal_code_create"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="text"
+                        android:textColor="@color/event_hub_text_input_create"
+                        android:textSize="16sp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/til_city_create"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp" android:hint="@string/hint_city"
+                    app:boxBackgroundColor="@color/event_hub_text_field_background_create"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusBottomEnd="12dp"
+                    app:hintTextColor="@color/event_hub_text_field_hint_create">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_city_create"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textCapWords"
+                        android:textColor="@color/event_hub_text_input_create"
+                        android:textSize="16sp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="16dp"> <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/til_region_create"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp" android:hint="@string/hint_region"
+                    app:boxBackgroundColor="@color/event_hub_text_field_background_create"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusBottomEnd="12dp"
+                    app:hintTextColor="@color/event_hub_text_field_hint_create">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_region_create"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textCapCharacters"
+                        android:textColor="@color/event_hub_text_input_create"
+                        android:textSize="16sp" />
+                </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/til_country_iso_create"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:hint="@string/hint_country_iso"
+                        app:boxBackgroundColor="@color/event_hub_text_field_background_create"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:hintTextColor="@color/event_hub_text_field_hint_create">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/et_country_iso_create"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textCapCharacters"
+                            android:maxLength="2"
+                            android:textColor="@color/event_hub_text_input_create"
+                            android:textSize="16sp" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/til_latitude_create"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:hint="Latitude (Optional)"
+                    app:boxBackgroundColor="@color/event_hub_text_field_background_create"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusBottomEnd="12dp"
+                    app:hintTextColor="@color/event_hub_text_field_hint_create">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_latitude_create"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="numberDecimal"
+                        android:textColor="@color/event_hub_text_input_create"
+                        android:textSize="16sp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/til_longitude_create"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:hint="Longitude (Optional)"
+                    app:boxBackgroundColor="@color/event_hub_text_field_background_create"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusBottomEnd="12dp"
+                    app:hintTextColor="@color/event_hub_text_field_hint_create">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_longitude_create"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="numberDecimal"
+                        android:textColor="@color/event_hub_text_input_create"
+                        android:textSize="16sp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/ll_existing_location_selection"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="vertical"
+                android:visibility="gone"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/rg_location_type">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/select_existing_location_prompt"
+                    android:layout_marginBottom="4dp"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp"/>
+
+                <Spinner
+                    android:id="@+id/spinner_existing_locations"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
+                    android:background="@drawable/spinner_background"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:spinnerMode="dropdown" />
+
+                <ProgressBar
+                    android:id="@+id/pb_locations_loading"
+                    style="?android:attr/progressBarStyleSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:visibility="gone"
+                    android:layout_marginTop="8dp"/>
+
+                <TextView
+                    android:id="@+id/tv_no_existing_locations"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/no_existing_locations_found"
+                    android:gravity="center"
+                    android:textColor="@android:color/darker_gray"
+                    android:visibility="gone"
+                    android:layout_marginTop="8dp"/>
+
+            </LinearLayout>
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_select_event_start_date"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
@@ -132,8 +405,7 @@
                 app:cornerRadius="20dp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/guideline_vertical_event_create"
-                app:layout_constraintTop_toBottomOf="@id/til_event_description_create"
-                android:layout_marginEnd="4dp"/>
+                app:layout_constraintTop_toBottomOf="@id/ll_new_location_inputs" android:layout_marginEnd="4dp"/>
 
             <TextView
                 android:id="@+id/tv_selected_event_start_date"
@@ -189,7 +461,7 @@
                 app:cornerRadius="20dp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/guideline_vertical_event_create"
-                app:layout_constraintTop_toBottomOf="@id/tv_selected_event_start_date"
+                app:layout_constraintTop_toBottomOf="@id/tv_selected_event_start_time"
                 android:layout_marginEnd="4dp"/>
 
             <TextView
@@ -233,30 +505,6 @@
                 app:layout_constraintTop_toBottomOf="@id/btn_select_event_end_time"/>
 
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/til_event_location_create"
-                style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:hint="@string/hint_event_location"
-                app:boxBackgroundColor="@color/event_hub_text_field_background_create"
-                app:boxCornerRadiusTopStart="12dp"
-                app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp"
-                app:boxCornerRadiusBottomEnd="12dp"
-                app:hintTextColor="@color/event_hub_text_field_hint_create"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tv_selected_event_end_date"> <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/et_event_location_create"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="textCapSentences"
-                android:textColor="@color/event_hub_text_input_create"
-                android:textSize="16sp" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/til_event_max_participants_create"
                 style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
                 android:layout_width="0dp"
@@ -271,20 +519,18 @@
                 app:hintTextColor="@color/event_hub_text_field_hint_create"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/til_event_location_create">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/et_event_max_participants_create"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="number"
-                    android:textColor="@color/event_hub_text_input_create"
-                    android:textSize="16sp" />
+                app:layout_constraintTop_toBottomOf="@id/tv_selected_event_end_time"> <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_event_max_participants_create"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:textColor="@color/event_hub_text_input_create"
+                android:textSize="16sp" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.switchmaterial.SwitchMaterial
                 android:id="@+id/switch_event_public_create"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:text="@string/switch_make_event_public"
@@ -293,6 +539,7 @@
                 app:thumbTint="@color/event_hub_purple_primary_create"
                 app:trackTint="@color/event_hub_text_field_background_create"
                 app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/til_event_max_participants_create"/>
 
             <com.google.android.material.button.MaterialButton
@@ -307,19 +554,21 @@
                 app:iconTint="@color/event_hub_purple_primary_main"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/switch_event_public_create"
-                android:visibility="gone" /> <ProgressBar
-            android:id="@+id/pb_create_event_loading"
-            style="?android:attr/progressBarStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:visibility="gone"
-            app:layout_constraintTop_toBottomOf="@id/btn_add_event_photos"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            android:layout_marginBottom="16dp"
-            tools:visibility="visible"/>
+                android:visibility="gone" />
+
+            <ProgressBar
+                android:id="@+id/pb_create_event_loading"
+                style="?android:attr/progressBarStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:visibility="gone"
+                app:layout_constraintTop_toBottomOf="@id/btn_add_event_photos"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:layout_marginBottom="16dp"
+                tools:visibility="visible"/>
 
             <androidx.constraintlayout.widget.Guideline
                 android:id="@+id/guideline_vertical_event_create"

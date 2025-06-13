@@ -20,16 +20,16 @@ public class InvitationAdapter extends RecyclerView.Adapter<InvitationAdapter.In
 
     private List<InvitationModel> invitationList;
     private final OnInvitationActionListener listener;
-    private List<com.example.event_hub.Model.EventModel> eventListCache; // To look up event titles
+    private List<com.example.event_hub.Model.EventModel> eventListCache;
 
     public interface OnInvitationActionListener {
         void onAcceptInvitation(InvitationModel invitation);
         void onDeclineInvitation(InvitationModel invitation);
-        void onInvitationClick(InvitationModel invitation); // For navigating to event detail
+        void onInvitationClick(InvitationModel invitation);
     }
 
     public InvitationAdapter(List<InvitationModel> initialInvitationList,
-                             List<com.example.event_hub.Model.EventModel> eventListCache, // Pass full event list for title lookup
+                             List<com.example.event_hub.Model.EventModel> eventListCache,
                              OnInvitationActionListener listener) {
         this.invitationList = new ArrayList<>(initialInvitationList);
         this.eventListCache = new ArrayList<>(eventListCache != null ? eventListCache : new ArrayList<>());
@@ -40,19 +40,22 @@ public class InvitationAdapter extends RecyclerView.Adapter<InvitationAdapter.In
     @Override
     public InvitationViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_invitation_card, parent, false); // You'll need to create this layout
+                .inflate(R.layout.item_invitation_card, parent, false);
         return new InvitationViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull InvitationViewHolder holder, int position) {
         InvitationModel invitation = invitationList.get(position);
-        String eventTitle = "Event ID: " + invitation.getEventId(); // Default
-        if (eventListCache != null) {
-            for (com.example.event_hub.Model.EventModel event : eventListCache) {
-                if (event.getId().equals(invitation.getEventId())) {
-                    eventTitle = event.getTitle();
-                    break;
+        String eventTitle = "Unknown Event";
+        if (invitation.getEvent() != null) {
+            eventTitle = "Event ID: " + invitation.getEvent().getId();
+            if (eventListCache != null) {
+                for (com.example.event_hub.Model.EventModel event : eventListCache) {
+                    if (event.getId().equals(invitation.getEvent().getId())) {
+                        eventTitle = event.getName();
+                        break;
+                    }
                 }
             }
         }
@@ -100,7 +103,6 @@ public class InvitationAdapter extends RecyclerView.Adapter<InvitationAdapter.In
                 tvSentDate.setText("Sent: N/A");
             }
 
-            // Show/Hide buttons based on status
             if ("sent".equalsIgnoreCase(invitation.getInvitationStatus())) {
                 btnAccept.setVisibility(View.VISIBLE);
                 btnDecline.setVisibility(View.VISIBLE);

@@ -1,6 +1,7 @@
+// src/main/java/com/example/event_hub/View/adapter/UserInviteAdapter.java
 package com.example.event_hub.View.adapter;
 
-import android.graphics.Color;
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,32 +10,37 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.example.event_hub.Model.UserModel;
 import com.example.event_hub.R;
-// import com.bumptech.glide.Glide; // If using Glide for avatars
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-public class UserInviteAdapter extends RecyclerView.Adapter<UserInviteAdapter.UserInviteViewHolder> {
+public class UserInviteAdapter extends ListAdapter<UserModel, UserInviteAdapter.UserInviteViewHolder> {
 
-    private List<UserModel> userList;
     private final OnUserSelectionChangedListener selectionListener;
-    private final Set<String> selectedUserIds = new HashSet<>(); // To keep track of selected users
+    private final Set<Long> selectedUserIds = new HashSet<>();
 
+    /**
+     * Listener for tracking user selection changes.
+     */
     public interface OnUserSelectionChangedListener {
-        void onUserSelectionChanged(UserModel user, boolean isSelected);
+        void onUserSelectionChanged();
     }
 
-    public UserInviteAdapter(List<UserModel> initialUserList, OnUserSelectionChangedListener listener) {
-        this.userList = new ArrayList<>(initialUserList);
+    public UserInviteAdapter(@NonNull OnUserSelectionChangedListener listener) {
+        super(new UserDiffCallback());
         this.selectionListener = listener;
     }
 
@@ -43,37 +49,78 @@ public class UserInviteAdapter extends RecyclerView.Adapter<UserInviteAdapter.Us
     public UserInviteViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_user_invite, parent, false);
-        return new UserInviteViewHolder(view);
+        return new UserInviteViewHolder(view, this::onItemClick);
     }
 
     @Override
     public void onBindViewHolder(@NonNull UserInviteViewHolder holder, int position) {
-        UserModel user = userList.get(position);
-        holder.bind(user, selectedUserIds.contains(user.getUserId()), selectionListener, selectedUserIds);
+        UserModel user = getItem(position);
+        holder.bind(user, selectedUserIds.contains(user.getId()));
     }
 
-    @Override
-    public int getItemCount() {
-        return userList != null ? userList.size() : 0;
+    /**
+     * Handles clicks on an item view or checkbox, toggling its selection state.
+     * @param position The adapter position of the clicked item.
+     */
+    private void onItemClick(int position) {
+        UserModel user = getItem(position);
+        if (user == null || user.getId() == null) return;
+
+        if (selectedUserIds.contains(user.getId())) {
+            selectedUserIds.remove(user.getId());
+        } else {
+            selectedUserIds.add(user.getId());
+        }
+        notifyItemChanged(position);
+        if (selectionListener != null) {
+            selectionListener.onUserSelectionChanged();
+        }
     }
 
-    public void updateUsers(List<UserModel> newUserList) {
-        final UserDiffCallback diffCallback = new UserDiffCallback(this.userList, newUserList);
-        final DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(diffCallback);
-        this.userList.clear();
-        this.userList.addAll(newUserList);
-        diffResult.dispatchUpdatesTo(this);
-    }
-
+    /**
+     * Clears all selections and updates the UI efficiently.
+     */
     public void clearSelections() {
+        if (selectedUserIds.isEmpty()) return;
+
+        // Create a copy to avoid ConcurrentModificationException while iterating
+        Set<Long> previouslySelected = new HashSet<>(selectedUserIds);
         selectedUserIds.clear();
-        notifyDataSetChanged(); // Re-bind all to uncheck
+
+        for (int i = 0; i < getCurrentList().size(); i++) {
+            if (previouslySelected.contains(getCurrentList().get(i).getId())) {
+                notifyItemChanged(i);
+            }
+        }
+        if (selectionListener != null) {
+            selectionListener.onUserSelectionChanged();
+        }
     }
 
+    /**
+     * Overrides the default submitList to also handle retaining selection state.
+     */
+    @Override
+    public void submitList(@Nullable List<UserModel> list) {
+        if (list != null) {
+            Set<Long> newUserIds = list.stream().map(UserModel::getId).collect(Collectors.toSet());
+            selectedUserIds.retainAll(newUserIds); // Keep selections only for users present in the new list
+        } else {
+            selectedUserIds.clear();
+        }
+        super.submitList(list);
+        if (selectionListener != null) {
+            selectionListener.onUserSelectionChanged();
+        }
+    }
+
+    /**
+     * @return A list of all currently selected UserModel objects.
+     */
     public List<UserModel> getSelectedUsers() {
         List<UserModel> selected = new ArrayList<>();
-        for (UserModel user : userList) {
-            if (selectedUserIds.contains(user.getUserId())) {
+        for (UserModel user : getCurrentList()) {
+            if (selectedUserIds.contains(user.getId())) {
                 selected.add(user);
             }
         }
@@ -81,94 +128,84 @@ public class UserInviteAdapter extends RecyclerView.Adapter<UserInviteAdapter.Us
     }
 
 
+    /**
+     * ViewHolder for displaying a single user item for invitation.
+     */
     static class UserInviteViewHolder extends RecyclerView.ViewHolder {
-        ImageView ivUserAvatar;
-        TextView tvUserName, tvUserLogin;
-        CheckBox checkboxInviteUser;
-        Random random = new Random();
+        final ImageView ivUserAvatar;
+        final TextView tvUserName;
+        final TextView tvUserLogin;
+        final CheckBox checkboxInviteUser;
+        final Context context;
 
-        public UserInviteViewHolder(@NonNull View itemView) {
+        public UserInviteViewHolder(@NonNull View itemView, OnItemClickListener listener) {
             super(itemView);
+            this.context = itemView.getContext();
             ivUserAvatar = itemView.findViewById(R.id.iv_user_avatar_invite_item);
             tvUserName = itemView.findViewById(R.id.tv_user_name_invite_item);
             tvUserLogin = itemView.findViewById(R.id.tv_user_login_invite_item);
             checkboxInviteUser = itemView.findViewById(R.id.checkbox_invite_user);
+
+            // Set listeners to call the adapter's click handler
+            View.OnClickListener clickListener = v -> {
+                int position = getAdapterPosition();
+                if (position != RecyclerView.NO_POSITION) {
+                    listener.onItemClick(position);
+                }
+            };
+            itemView.setOnClickListener(clickListener);
+            checkboxInviteUser.setOnClickListener(clickListener);
         }
 
-        public void bind(final UserModel user,
-                         boolean isSelected,
-                         final OnUserSelectionChangedListener listener,
-                         final Set<String> selectedUserIds) {
-
-            if (user.getUserDetails() != null && user.getUserDetails().getFullName() != null && !user.getUserDetails().getFullName().isEmpty()) {
-                tvUserName.setText(user.getUserDetails().getFullName());
-                ivUserAvatar.setContentDescription(user.getUserDetails().getFullName());
-                if (!user.getUserDetails().getFullName().isEmpty()) {
-                    // tvParticipantAvatar.setText(String.valueOf(participant.getUserDetails().getFullName().charAt(0)).toUpperCase());
-                } else {
-                    // tvParticipantAvatar.setText("?");
-                }
-            } else {
-                tvUserName.setText(user.getLogin()); // Fallback to login
-                ivUserAvatar.setContentDescription(user.getLogin());
-            }
+        public void bind(final UserModel user, boolean isSelected) {
+            String displayName = user.getName() != null && !user.getName().isEmpty() ? user.getName() : user.getLogin();
+            tvUserName.setText(displayName);
             tvUserLogin.setText(user.getLogin() != null ? "@" + user.getLogin() : "");
+            ivUserAvatar.setContentDescription(displayName);
 
-            // TODO: Load actual avatar using Glide from user.getUserDetails().getProfileImageUrl()
-            // For now, placeholder
-            ivUserAvatar.setImageResource(R.drawable.ic_profile_placeholder);
-            int Rnd = random.nextInt(156) + 100;
-            int Gnd = random.nextInt(156) + 100;
-            int Bnd = random.nextInt(156) + 100;
-            if (ivUserAvatar.getBackground() != null) {
-                ivUserAvatar.getBackground().mutate().setTint(Color.rgb(Rnd,Gnd,Bnd));
+            // Use Glide to load the user's profile image
+            String profileImageUrl = user.getProfileImageUrl();
+            if (profileImageUrl == null || profileImageUrl.isEmpty()) {
+                Glide.with(context)
+                        .load(R.drawable.ic_profile_placeholder) // Directly load placeholder if URL is null/empty
+                        .apply(new RequestOptions().circleCrop()) // Apply circleCrop as before
+                        .into(ivUserAvatar);
+            } else {
+                Glide.with(context)
+                        .load(profileImageUrl)
+                        .apply(new RequestOptions()
+                                .placeholder(R.drawable.ic_profile_placeholder)
+                                .error(R.drawable.ic_profile_placeholder)
+                                .circleCrop())
+                        .into(ivUserAvatar);
             }
 
-
-            checkboxInviteUser.setOnCheckedChangeListener(null); // Avoid listener conflicts during rebind
+            // Update checkbox state without triggering the listener
             checkboxInviteUser.setChecked(isSelected);
-            checkboxInviteUser.setOnCheckedChangeListener((buttonView, isNowChecked) -> {
-                if (isNowChecked) {
-                    selectedUserIds.add(user.getUserId());
-                } else {
-                    selectedUserIds.remove(user.getUserId());
-                }
-                if (listener != null) {
-                    listener.onUserSelectionChanged(user, isNowChecked);
-                }
-            });
+        }
 
-            itemView.setOnClickListener(v -> {
-                checkboxInviteUser.setChecked(!checkboxInviteUser.isChecked());
-                // The listener on checkbox will handle logic
-            });
+        interface OnItemClickListener {
+            void onItemClick(int position);
         }
     }
 
-    private static class UserDiffCallback extends DiffUtil.Callback {
-        private final List<UserModel> oldList;
-        private final List<UserModel> newList;
-
-        public UserDiffCallback(List<UserModel> oldList, List<UserModel> newList) {
-            this.oldList = oldList;
-            this.newList = newList;
-        }
-
-        @Override public int getOldListSize() { return oldList.size(); }
-        @Override public int getNewListSize() { return newList.size(); }
-
+    /**
+     * DiffUtil.Callback for efficiently calculating differences between two lists.
+     */
+    private static class UserDiffCallback extends DiffUtil.ItemCallback<UserModel> {
         @Override
-        public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
-            return oldList.get(oldItemPosition).getUserId().equals(newList.get(newItemPosition).getUserId());
+        public boolean areItemsTheSame(@NonNull UserModel oldItem, @NonNull UserModel newItem) {
+            return Objects.equals(oldItem.getId(), newItem.getId());
         }
 
         @Override
-        public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
-            UserModel oldUser = oldList.get(oldItemPosition);
-            UserModel newUser = newList.get(newItemPosition);
-            return oldUser.equals(newUser) && // Checks userId
-                    Objects.equals(oldUser.getLogin(), newUser.getLogin()) &&
-                    Objects.equals(oldUser.getUserDetails(), newUser.getUserDetails()); // UserDetails needs equals()
+        public boolean areContentsTheSame(@NonNull UserModel oldItem, @NonNull UserModel newItem) {
+            // Compare only relevant fields for UI updates to improve DiffUtil performance
+            return Objects.equals(oldItem.getName(), newItem.getName()) &&
+                    Objects.equals(oldItem.getLogin(), newItem.getLogin()) &&
+                    Objects.equals(oldItem.getProfileImageUrl(), newItem.getProfileImageUrl()) &&
+                    Objects.equals(oldItem.getRole(), newItem.getRole()) && // Role might affect visibility/actions
+                    Objects.equals(oldItem.getStatus(), newItem.getStatus()); // Status might affect visibility/actions
         }
     }
 }

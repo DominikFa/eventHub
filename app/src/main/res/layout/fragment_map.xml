@@ -6,11 +6,14 @@
     android:layout_height="match_parent"
     tools:context="com.example.event_hub.View.MapFragment">
 
-    <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/map_container"
-        android:name="com.google.android.gms.maps.SupportMapFragment"
+    <!-- Replaced FragmentContainerView with ImageView for static map -->
+    <ImageView
+        android:id="@+id/iv_static_map"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:scaleType="centerCrop"
+        android:contentDescription="@string/content_desc_static_map"
+        android:background="@android:color/darker_gray"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/btn_open_in_maps_app"
         app:layout_constraintStart_toStartOf="parent"
@@ -22,10 +25,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="gone"
-        app:layout_constraintTop_toTopOf="@id/map_container"
-        app:layout_constraintBottom_toBottomOf="@id/map_container"
-        app:layout_constraintStart_toStartOf="@id/map_container"
-        app:layout_constraintEnd_toEndOf="@id/map_container"
+        app:layout_constraintTop_toTopOf="@id/iv_static_map"
+        app:layout_constraintBottom_toBottomOf="@id/iv_static_map"
+        app:layout_constraintStart_toStartOf="@id/iv_static_map"
+        app:layout_constraintEnd_toEndOf="@id/iv_static_map"
         tools:visibility="visible"/>
 
     <TextView
@@ -37,10 +40,10 @@
         android:visibility="gone"
         android:padding="16dp"
         android:gravity="center"
-        app:layout_constraintTop_toTopOf="@id/map_container"
-        app:layout_constraintBottom_toBottomOf="@id/map_container"
-        app:layout_constraintStart_toStartOf="@id/map_container"
-        app:layout_constraintEnd_toEndOf="@id/map_container"
+        app:layout_constraintTop_toTopOf="@id/iv_static_map"
+        app:layout_constraintBottom_toBottomOf="@id/iv_static_map"
+        app:layout_constraintStart_toStartOf="@id/iv_static_map"
+        app:layout_constraintEnd_toEndOf="@id/iv_static_map"
         tools:text="Error loading map or location."
         tools:visibility="visible"/>
 

@@ -1,6 +1,7 @@
 package com.example.event_hub.View;
 
 import android.app.AlertDialog;
+import android.content.Intent; // Import Intent
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,15 +16,18 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
+
+import com.bumptech.glide.Glide;
 import com.example.event_hub.Model.ResultWrapper;
-import com.example.event_hub.Model.UserDetails;
 import com.example.event_hub.Model.UserModel;
 import com.example.event_hub.R;
+import com.example.event_hub.Repositiry.ApiClient; // Import ApiClient
 import com.example.event_hub.ViewModel.AuthViewModel;
 import com.example.event_hub.ViewModel.ProfileViewModel;
 import com.google.android.material.button.MaterialButton;
 
 public class ProfileFragment extends Fragment {
+
 
     private ProfileViewModel profileViewModel;
     private AuthViewModel authViewModel;
@@ -32,12 +36,12 @@ public class ProfileFragment extends Fragment {
     private TextView tvFullName, tvUsername, tvEmail, tvBio, tvRole, tvStatus;
     private MaterialButton btnEditProfile, btnLogout, btnBanUser, btnDeleteAccount;
     private ProgressBar pbProfileLoading;
-    private View nsvProfileContent; // NestedScrollView or main content view
+    private View nsvProfileContent;
 
-    private String profileUserIdToDisplay; // User ID whose profile is being displayed
-    private String loggedInUserId; // Currently authenticated user's ID
-    private String currentAuthToken;
-    private UserModel displayedUserModel; // The UserModel object currently being displayed
+    private Long profileUserIdToDisplay;
+    private Long loggedInUserId;
+    private String currentAuthToken; // Still used for button visibility and other actions
+    private UserModel displayedUserModel;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -46,7 +50,10 @@ public class ProfileFragment extends Fragment {
         authViewModel = new ViewModelProvider(requireActivity()).get(AuthViewModel.class);
 
         if (getArguments() != null) {
-            profileUserIdToDisplay = getArguments().getString("userId", null);
+            long userIdArg = getArguments().getLong("userId", 0L);
+            if (userIdArg > 0) {
+                profileUserIdToDisplay = userIdArg;
+            }
         }
     }
 
@@ -87,11 +94,7 @@ public class ProfileFragment extends Fragment {
 
     private void setupClickListeners() {
         btnEditProfile.setOnClickListener(v -> {
-            if (displayedUserModel != null && currentAuthToken != null) {
-                Toast.makeText(getContext(), "Edit Profile UI not implemented.", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(getContext(), "Profile data or authentication missing.", Toast.LENGTH_SHORT).show();
-            }
+            Toast.makeText(getContext(), R.string.edit_profile_not_implemented, Toast.LENGTH_SHORT).show();
         });
 
         btnLogout.setOnClickListener(v -> showLogoutConfirmationDialog());
@@ -100,7 +103,7 @@ public class ProfileFragment extends Fragment {
             if (displayedUserModel != null && currentAuthToken != null) {
                 showBanConfirmationDialog(displayedUserModel);
             } else {
-                Toast.makeText(getContext(), "Profile data or authentication missing.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), R.string.profile_or_auth_missing, Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -108,7 +111,7 @@ public class ProfileFragment extends Fragment {
             if (displayedUserModel != null && currentAuthToken != null) {
                 showDeleteConfirmationDialog(displayedUserModel);
             } else {
-                Toast.makeText(getContext(), "Profile data or authentication missing.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), R.string.profile_or_auth_missing, Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -116,137 +119,164 @@ public class ProfileFragment extends Fragment {
     private void observeViewModels() {
         authViewModel.currentUserId.observe(getViewLifecycleOwner(), id -> {
             loggedInUserId = id;
-            if (profileUserIdToDisplay != null) {
-                profileViewModel.loadUserProfile(profileUserIdToDisplay);
-            } else if (loggedInUserId != null) {
-                profileViewModel.loadUserProfile(loggedInUserId);
-            } else {
-                nsvProfileContent.setVisibility(View.GONE);
-                pbProfileLoading.setVisibility(View.GONE);
-                if (isAdded() && getView() != null && Navigation.findNavController(getView()).getCurrentDestination().getId() == R.id.profileFragment) {
-                    Toast.makeText(getContext(), R.string.login_to_view_profiles, Toast.LENGTH_LONG).show();
-                }
-            }
+            // Centralize profile loading logic to ensure proper ID and token handling
+            loadProfileBasedOnState();
             updateButtonVisibility();
         });
 
         authViewModel.currentJwtToken.observe(getViewLifecycleOwner(), token -> {
             currentAuthToken = token;
+            // Centralize profile loading logic to ensure proper ID and token handling
+            loadProfileBasedOnState();
             updateButtonVisibility();
         });
 
         profileViewModel.userProfileState.observe(getViewLifecycleOwner(), result -> {
             handleVisibility(pbProfileLoading, result instanceof ResultWrapper.Loading);
-            if (result instanceof ResultWrapper.Loading) {
-                nsvProfileContent.setVisibility(View.GONE);
-            }
+            nsvProfileContent.setVisibility(result instanceof ResultWrapper.Success ? View.VISIBLE : View.GONE);
 
             if (result instanceof ResultWrapper.Success) {
-                ResultWrapper.Success<UserModel> successResult = (ResultWrapper.Success<UserModel>) result;
-                displayedUserModel = successResult.getData();
+                displayedUserModel = ((ResultWrapper.Success<UserModel>) result).getData();
                 if (displayedUserModel != null) {
                     populateProfileData(displayedUserModel);
-                    nsvProfileContent.setVisibility(View.VISIBLE);
                 } else {
                     nsvProfileContent.setVisibility(View.GONE);
-                    if (isAdded() && (profileUserIdToDisplay != null || loggedInUserId != null))
-                        Toast.makeText(getContext(), R.string.profile_data_not_loaded, Toast.LENGTH_SHORT).show();
+                    if (isAdded()) Toast.makeText(getContext(), R.string.profile_data_not_loaded, Toast.LENGTH_SHORT).show();
                 }
             } else if (result instanceof ResultWrapper.Error) {
-                nsvProfileContent.setVisibility(View.GONE);
                 ResultWrapper.Error<?> errorResult = (ResultWrapper.Error<?>) result;
-                if (isAdded() && (profileUserIdToDisplay != null || loggedInUserId != null))
-                    Toast.makeText(getContext(), getString(R.string.error_loading_profile_prefix) + errorResult.getMessage(), Toast.LENGTH_LONG).show();
+                if (isAdded()) Toast.makeText(getContext(), getString(R.string.error_loading_profile_prefix) + errorResult.getMessage(), Toast.LENGTH_LONG).show();
+                nsvProfileContent.setVisibility(View.GONE);
             }
             updateButtonVisibility();
         });
 
-        profileViewModel.profileEditState.observe(getViewLifecycleOwner(), result -> {
-            if (result instanceof ResultWrapper.Loading){
-                // Handled by userProfileState or specific button disabling
-            } else if (result instanceof ResultWrapper.Success) {
-                ResultWrapper.Success<UserModel> successResult = (ResultWrapper.Success<UserModel>) result;
-                UserModel updatedUser = successResult.getData();
-                if (updatedUser != null && displayedUserModel != null && updatedUser.getUserId().equals(displayedUserModel.getUserId())) {
-                    Toast.makeText(getContext(), R.string.profile_updated_successfully, Toast.LENGTH_SHORT).show();
-                }
-            } else if (result instanceof ResultWrapper.Error) {
-                ResultWrapper.Error<?> errorResult = (ResultWrapper.Error<?>) result;
-                Toast.makeText(getContext(), getString(R.string.profile_edit_failed_prefix) + errorResult.getMessage(), Toast.LENGTH_LONG).show();
-            }
-        });
-
         profileViewModel.userActionState.observe(getViewLifecycleOwner(), result -> {
-            if (result instanceof ResultWrapper.Loading){
-                // Disable relevant button e.g. btnBanUser.setEnabled(false);
-            } else if (result instanceof ResultWrapper.Success) {
+            if (result instanceof ResultWrapper.Success) {
                 Toast.makeText(getContext(), R.string.user_action_successful, Toast.LENGTH_SHORT).show();
-                if (displayedUserModel != null && loggedInUserId != null && !displayedUserModel.getUserId().equals(loggedInUserId)) {
-                    profileViewModel.loadUserProfile(displayedUserModel.getUserId());
+                if (displayedUserModel != null && loggedInUserId != null && !displayedUserModel.getId().equals(loggedInUserId)) {
+                    profileViewModel.loadUserProfile(displayedUserModel.getId()); // No token param here, gets from ViewModel
                 }
-                // Re-enable button if it was disabled for loading
             } else if (result instanceof ResultWrapper.Error) {
                 ResultWrapper.Error<?> errorResult = (ResultWrapper.Error<?>) result;
                 Toast.makeText(getContext(), getString(R.string.user_action_failed_prefix) + errorResult.getMessage(), Toast.LENGTH_LONG).show();
-                // Re-enable button
             }
         });
 
         authViewModel.logoutState.observe(getViewLifecycleOwner(), result -> {
             if (result instanceof ResultWrapper.Success) {
                 Toast.makeText(getContext(), R.string.action_logout_successful, Toast.LENGTH_SHORT).show();
-                if (getView() != null && isAdded()) {
-                    NavController navController = Navigation.findNavController(getView());
-                    navController.navigate(R.id.loginActivity, null, new androidx.navigation.NavOptions.Builder()
-                            .setPopUpTo(R.id.nav_graph, true)
-                            .build());
-                }
+                navigateToLogin(); // Direct navigation after successful logout
             } else if (result instanceof ResultWrapper.Error) {
                 Toast.makeText(getContext(), R.string.action_logout_failed, Toast.LENGTH_SHORT).show();
             }
         });
     }
 
+    // New helper method to encapsulate profile loading logic based on current state
+    private void loadProfileBasedOnState() {
+        if (loggedInUserId != null && loggedInUserId != 0L) {
+            // User is logged in
+            if (profileUserIdToDisplay != null && profileUserIdToDisplay != 0L) {
+                // If a specific userId is passed, load that profile.
+                // ProfileViewModel will decide which API (current user or by ID) to call.
+                profileViewModel.loadUserProfile(profileUserIdToDisplay);
+            } else {
+                // If no specific userId is passed, load the logged-in user's own profile.
+                profileViewModel.loadUserProfile(loggedInUserId);
+            }
+        } else {
+            // User is not logged in.
+            // If profileUserIdToDisplay was set, this implies an attempt to view someone else's profile while not logged in.
+            // This should redirect to login.
+            // If profileUserIdToDisplay was not set, it's a direct navigation to "my profile" while not logged in.
+            // This also redirects to login.
+            handleNotLoggedInState();
+        }
+    }
+
+
+    private void handleNotLoggedInState() {
+        nsvProfileContent.setVisibility(View.GONE);
+        pbProfileLoading.setVisibility(View.GONE);
+        if (isAdded()) {
+            Toast.makeText(getContext(), R.string.login_to_view_profiles, Toast.LENGTH_LONG).show();
+            // Do NOT navigate from here directly, as it might cause a loop or unexpected behavior
+            // Let the MainActivity (or parent Activity) handle the ultimate redirection if needed.
+            // For now, just show the message and ensure the UI is not showing profile data.
+            // If the user tries to interact with profile functionality without being logged in,
+            // they will be redirected to LoginActivity by the MainActivity's bottom navigation
+            // or profile/login button handling.
+        }
+    }
+
+    /**
+     * Navigates to the LoginActivity and clears the activity stack.
+     * This ensures a clean slate after logout.
+     */
+    private void navigateToLogin() {
+        if (isAdded()) { // Ensure fragment is attached
+            Intent intent = new Intent(requireActivity(), LoginActivity.class);
+            // These flags clear all previous activities and start LoginActivity as a new task.
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            requireActivity().finishAffinity(); // Finish MainActivity and all its tasks
+        }
+    }
+
     private void populateProfileData(UserModel user) {
         if (getContext() == null || user == null) return;
-        UserDetails details = user.getUserDetails();
-        if (details != null) {
-            tvFullName.setText(details.getFullName() != null ? details.getFullName() : getString(R.string.not_available_placeholder));
-            tvBio.setText(details.getDescription() != null ? details.getDescription() : getString(R.string.not_available_placeholder));
-            ivProfileAvatar.setImageResource(R.drawable.ic_profile_placeholder);
-        } else {
-            tvFullName.setText(getString(R.string.not_available_placeholder));
-            tvBio.setText(getString(R.string.not_available_placeholder));
-            ivProfileAvatar.setImageResource(R.drawable.ic_profile_placeholder);
-        }
-        tvUsername.setText(user.getLogin() != null ? user.getLogin() : getString(R.string.not_available_placeholder));
-        tvEmail.setText(user.getEmail() != null ? user.getEmail() : getString(R.string.not_available_placeholder));
+
+        tvFullName.setText(user.getName() != null ? user.getName() : getString(R.string.not_available_placeholder));
+        tvBio.setText(user.getDescription() != null && !user.getDescription().isEmpty() ? user.getDescription() : getString(R.string.not_available_placeholder));
+        tvUsername.setText(user.getLogin() != null ? "@" + user.getLogin() : getString(R.string.not_available_placeholder));
+        tvEmail.setText(user.getLogin() != null ? user.getLogin() : getString(R.string.not_available_placeholder));
         tvRole.setText(user.getRole() != null ? user.getRole().toUpperCase() : getString(R.string.not_available_placeholder));
         tvStatus.setText(user.getStatus() != null ? user.getStatus().toUpperCase() : getString(R.string.not_available_placeholder));
+
+
+        String imageUrl = null;
+        if (user.getId() != null) {
+            imageUrl = ApiClient.BASE_URL + "api/users/" + user.getId() + "/profile-image";
+        }
+
+        if (imageUrl != null) {
+            Glide.with(this)
+                    .load(imageUrl)
+                    .placeholder(R.drawable.ic_profile_placeholder) // Placeholder image while loading
+                    .error(R.drawable.ic_profile_placeholder)      // Image to display on error
+                    .into(ivProfileAvatar);
+        } else {
+            // Fallback to placeholder if no valid URL can be constructed
+            ivProfileAvatar.setImageResource(R.drawable.ic_profile_placeholder);
+        }
     }
 
     private void updateButtonVisibility() {
         boolean isLoggedIn = currentAuthToken != null && loggedInUserId != null;
-        boolean isViewingOwnProfile = displayedUserModel != null && isLoggedIn && loggedInUserId.equals(displayedUserModel.getUserId());
+        if (!isLoggedIn || displayedUserModel == null) {
+            btnEditProfile.setVisibility(View.GONE);
+            btnLogout.setVisibility(View.GONE);
+            btnBanUser.setVisibility(View.GONE);
+            btnDeleteAccount.setVisibility(View.GONE);
+            return;
+        }
 
+        boolean isViewingOwnProfile = loggedInUserId.equals(displayedUserModel.getId());
         btnEditProfile.setVisibility(isViewingOwnProfile ? View.VISIBLE : View.GONE);
         btnLogout.setVisibility(isViewingOwnProfile ? View.VISIBLE : View.GONE);
 
-        UserModel currentlyLoggedInUserDetails = authViewModel.getCurrentUserSynchronous();
-        boolean loggedInUserIsAdmin = currentlyLoggedInUserDetails != null && "admin".equalsIgnoreCase(currentlyLoggedInUserDetails.getRole());
+        UserModel loggedInUserDetails = authViewModel.getCurrentUserSynchronous();
+        boolean isAdmin = loggedInUserDetails != null && "ADMIN".equalsIgnoreCase(loggedInUserDetails.getRole());
 
-        if (displayedUserModel != null && isLoggedIn) {
-            if (isViewingOwnProfile) {
-                btnBanUser.setVisibility(View.GONE);
-                btnDeleteAccount.setVisibility(View.VISIBLE);
-            } else {
-                boolean displayedUserIsAdmin = "admin".equalsIgnoreCase(displayedUserModel.getRole());
-                btnBanUser.setVisibility(loggedInUserIsAdmin && !displayedUserIsAdmin ? View.VISIBLE : View.GONE);
-                btnDeleteAccount.setVisibility(loggedInUserIsAdmin && !displayedUserIsAdmin ? View.VISIBLE : View.GONE);
-            }
-        } else {
+        if (isViewingOwnProfile) {
             btnBanUser.setVisibility(View.GONE);
-            btnDeleteAccount.setVisibility(View.GONE);
+            btnDeleteAccount.setVisibility(View.VISIBLE);
+        } else {
+            boolean displayedUserIsAdmin = "ADMIN".equalsIgnoreCase(displayedUserModel.getRole());
+            int visibility = isAdmin && !displayedUserIsAdmin ? View.VISIBLE : View.GONE;
+            btnBanUser.setVisibility(visibility);
+            btnDeleteAccount.setVisibility(visibility);
         }
     }
 
@@ -261,21 +291,21 @@ public class ProfileFragment extends Fragment {
     }
 
     private void showBanConfirmationDialog(UserModel userToBan) {
-        if (getContext() == null || userToBan == null || currentAuthToken == null) return;
+        if (getContext() == null || currentAuthToken == null) return;
         new AlertDialog.Builder(getContext())
                 .setTitle(R.string.dialog_title_ban_confirm)
                 .setMessage(getString(R.string.dialog_message_ban_confirm_user, userToBan.getLogin()))
-                .setPositiveButton(R.string.dialog_button_ban, (dialog, which) -> profileViewModel.banUser(userToBan.getUserId(), currentAuthToken))
+                .setPositiveButton(R.string.dialog_button_ban, (dialog, which) -> profileViewModel.banUser(userToBan.getId(), currentAuthToken))
                 .setNegativeButton(R.string.dialog_button_cancel, null)
                 .show();
     }
 
     private void showDeleteConfirmationDialog(UserModel userToDelete) {
-        if (getContext() == null || userToDelete == null || currentAuthToken == null) return;
+        if (getContext() == null || currentAuthToken == null) return;
         new AlertDialog.Builder(getContext())
                 .setTitle(R.string.dialog_title_delete_confirm)
                 .setMessage(getString(R.string.dialog_message_delete_confirm_user, userToDelete.getLogin()))
-                .setPositiveButton(R.string.dialog_button_delete, (dialog, which) -> profileViewModel.deleteUser(userToDelete.getUserId(), currentAuthToken))
+                .setPositiveButton(R.string.dialog_button_delete, (dialog, which) -> profileViewModel.deleteUser(userToDelete.getId(), currentAuthToken))
                 .setNegativeButton(R.string.dialog_button_cancel, null)
                 .show();
     }

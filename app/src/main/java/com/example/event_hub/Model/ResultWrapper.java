@@ -1,5 +1,11 @@
 package com.example.event_hub.Model;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+
 public abstract class ResultWrapper<T> {
     private ResultWrapper() {} // Private constructor for sealed class simulation in Java
 

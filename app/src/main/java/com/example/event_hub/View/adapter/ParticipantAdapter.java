@@ -1,4 +1,4 @@
-package com.example.event_hub.View.adapter; // Or your preferred adapter package
+package com.example.event_hub.View.adapter;
 
 import android.graphics.Color;
 import android.view.LayoutInflater;
@@ -25,7 +25,7 @@ public class ParticipantAdapter extends RecyclerView.Adapter<ParticipantAdapter.
     private List<UserModel> participants;
     private final OnParticipantClickListener onParticipantClickListener;
     private final OnRemoveParticipantClickListener onRemoveParticipantClickListener;
-    private boolean canRemoveParticipants; // To control visibility of remove button
+    private boolean canRemoveParticipants;
 
     public interface OnParticipantClickListener {
         void onParticipantClick(UserModel participant);
@@ -39,7 +39,7 @@ public class ParticipantAdapter extends RecyclerView.Adapter<ParticipantAdapter.
                               OnParticipantClickListener onParticipantClickListener,
                               OnRemoveParticipantClickListener onRemoveParticipantClickListener,
                               boolean canRemoveParticipants) {
-        this.participants = new ArrayList<>(initialParticipants); // Work with a copy
+        this.participants = new ArrayList<>(initialParticipants);
         this.onParticipantClickListener = onParticipantClickListener;
         this.onRemoveParticipantClickListener = onRemoveParticipantClickListener;
         this.canRemoveParticipants = canRemoveParticipants;
@@ -70,15 +70,21 @@ public class ParticipantAdapter extends RecyclerView.Adapter<ParticipantAdapter.
 
         this.participants.clear();
         this.participants.addAll(newParticipants);
-        this.canRemoveParticipants = canRemove; // Update permission flag as well
+        this.canRemoveParticipants = canRemove;
         diffResult.dispatchUpdatesTo(this);
     }
+
+    // Added public getter for participants list
+    public List<UserModel> getParticipants() {
+        return new ArrayList<>(participants); // Return a copy to prevent external modification
+    }
+
 
     static class ParticipantViewHolder extends RecyclerView.ViewHolder {
         TextView tvParticipantName;
         TextView tvParticipantAvatar;
         ImageButton btnRemoveParticipant;
-        Random random = new Random(); // For random avatar colors
+        Random random = new Random();
 
         public ParticipantViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -91,31 +97,29 @@ public class ParticipantAdapter extends RecyclerView.Adapter<ParticipantAdapter.
                          final OnParticipantClickListener clickListener,
                          final OnRemoveParticipantClickListener removeClickListener,
                          boolean canRemove) {
-            if (participant.getUserDetails() != null && participant.getUserDetails().getFullName() != null && !participant.getUserDetails().getFullName().isEmpty()) {
-                tvParticipantName.setText(participant.getUserDetails().getFullName());
-                if (!participant.getUserDetails().getFullName().isEmpty()) {
-                    tvParticipantAvatar.setText(String.valueOf(participant.getUserDetails().getFullName().charAt(0)).toUpperCase());
-                } else {
-                    tvParticipantAvatar.setText("?");
-                }
+            String displayName;
+            String avatarChar;
+
+            if (participant.getName() != null && !participant.getName().isEmpty()) {
+                displayName = participant.getName();
+                avatarChar = String.valueOf(displayName.charAt(0)).toUpperCase();
             } else if (participant.getLogin() != null && !participant.getLogin().isEmpty()) {
-                tvParticipantName.setText(participant.getLogin()); // Fallback to login/username
-                tvParticipantAvatar.setText(String.valueOf(participant.getLogin().charAt(0)).toUpperCase());
+                displayName = participant.getLogin();
+                avatarChar = String.valueOf(displayName.charAt(0)).toUpperCase();
             } else {
-                tvParticipantName.setText("Unknown User");
-                tvParticipantAvatar.setText("U");
+                displayName = "Unknown User";
+                avatarChar = "U";
             }
 
-            // Set a random background color for the avatar for visual distinction
-            // In a real app, you might have profile images or a more consistent color scheme
-            int R = random.nextInt(156) + 100; // Between 100 and 255
+            tvParticipantName.setText(displayName);
+            tvParticipantAvatar.setText(avatarChar);
+
+            int R = random.nextInt(156) + 100;
             int G = random.nextInt(156) + 100;
             int B = random.nextInt(156) + 100;
-            // Ensure avatar background drawable is suitable for tinting
             if (tvParticipantAvatar.getBackground() != null) {
                 tvParticipantAvatar.getBackground().mutate().setTint(Color.rgb(R,G,B));
             }
-
 
             itemView.setOnClickListener(v -> {
                 if (clickListener != null) {
@@ -136,7 +140,6 @@ public class ParticipantAdapter extends RecyclerView.Adapter<ParticipantAdapter.
         }
     }
 
-    // DiffUtil.Callback implementation
     private static class ParticipantDiffCallback extends DiffUtil.Callback {
         private final List<UserModel> oldList;
         private final List<UserModel> newList;
@@ -158,26 +161,24 @@ public class ParticipantAdapter extends RecyclerView.Adapter<ParticipantAdapter.
 
         @Override
         public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
-            // Check if items represent the same object, typically by unique ID
-            return oldList.get(oldItemPosition).getUserId().equals(newList.get(newItemPosition).getUserId());
+            return oldList.get(oldItemPosition).getId().equals(newList.get(newItemPosition).getId());
         }
 
         @Override
         public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
-            // Check if the content of the items is the same
-            // This depends on what changes should trigger a rebind vs. full item change
             UserModel oldParticipant = oldList.get(oldItemPosition);
             UserModel newParticipant = newList.get(newItemPosition);
-            // Implement a proper equals in UserModel or compare relevant fields
-            return oldParticipant.equals(newParticipant) &&
-                    Objects.equals(oldParticipant.getUserDetails(), newParticipant.getUserDetails());
+            return Objects.equals(oldParticipant.getLogin(), newParticipant.getLogin()) &&
+                    Objects.equals(oldParticipant.getName(), newParticipant.getName()) &&
+                    Objects.equals(oldParticipant.getRole(), newParticipant.getRole()) &&
+                    Objects.equals(oldParticipant.getStatus(), newParticipant.getStatus()) &&
+                    Objects.equals(oldParticipant.getProfileImageUrl(), newParticipant.getProfileImageUrl()) &&
+                    Objects.equals(oldParticipant.getDescription(), newParticipant.getDescription());
         }
 
         @Nullable
         @Override
         public Object getChangePayload(int oldItemPosition, int newItemPosition) {
-            // Optional: Implement for more granular updates if areContentsTheSame is false
-            // but you want to animate specific parts of the view.
             return super.getChangePayload(oldItemPosition, newItemPosition);
         }
     }

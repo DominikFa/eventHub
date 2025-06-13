@@ -3,12 +3,16 @@ package com.example.event_hub.View;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.RadioGroup;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -17,18 +21,22 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
-import com.example.event_hub.Model.EventModel;
+import com.example.event_hub.Model.request.EventCreationRequest;
+import com.example.event_hub.Model.request.LocationCreationRequest;
+import com.example.event_hub.Model.LocationData;
 import com.example.event_hub.Model.ResultWrapper;
 import com.example.event_hub.R;
 import com.example.event_hub.ViewModel.AuthViewModel;
 import com.example.event_hub.ViewModel.CreateEventViewModel;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.switchmaterial.SwitchMaterial; // Import SwitchMaterial
+import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 public class CreateEventFragment extends Fragment {
@@ -36,24 +44,40 @@ public class CreateEventFragment extends Fragment {
     private CreateEventViewModel createEventViewModel;
     private AuthViewModel authViewModel;
 
-    private TextInputLayout tilEventName, tilEventDescription, tilEventLocation, tilMaxParticipants;
-    private TextInputEditText etEventName, etEventDescription, etEventLocation, etMaxParticipants;
+    private TextInputLayout tilEventName, tilEventDescription, tilMaxParticipants;
+    private TextInputEditText etEventName, etEventDescription, etMaxParticipants;
+
+    private RadioGroup rgLocationType;
+    private LinearLayout llNewLocationInputs, llExistingLocationSelection;
+    private TextInputLayout tilStreetName, tilStreetNumber, tilApartment, tilPostalCode, tilCity, tilRegion, tilCountryIso;
+    private TextInputEditText etStreetName, etStreetNumber, etApartment, etPostalCode, etCity, etRegion, etCountryIso;
+
+    // New fields for latitude and longitude
+    private TextInputLayout tilLatitude, tilLongitude;
+    private TextInputEditText etLatitude, etLongitude;
+
+    private Spinner spinnerExistingLocations;
+    private ProgressBar pbLocationsLoading;
+    private TextView tvNoExistingLocations;
+    private ArrayAdapter<String> existingLocationsAdapter;
+    private List<LocationData> availableLocations = new ArrayList<>();
+
     private MaterialButton btnSelectEventStartDate, btnSelectEventStartTime;
     private MaterialButton btnSelectEventEndDate, btnSelectEventEndTime;
-    private MaterialButton btnAddEventPhotos, btnCreateEventSubmit;
+    private MaterialButton btnCreateEventSubmit;
     private TextView tvSelectedEventStartDate, tvSelectedEventStartTime;
     private TextView tvSelectedEventEndDate, tvSelectedEventEndTime;
-    private SwitchMaterial switchEventPublic; // Added Switch
-    private ImageView ivUserIcon;
+    private SwitchMaterial switchEventPublic;
+    // Removed: private ImageView ivUserIcon;
     private ProgressBar pbCreateEventLoading;
 
     private Calendar startDateTimeCalendar = Calendar.getInstance();
     private Calendar endDateTimeCalendar = Calendar.getInstance();
     private String currentAuthToken;
-    private String loggedInUserId;
+    private Long loggedInUserId;
 
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
-    private SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM,EEEE", Locale.getDefault());
+    private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
 
 
     @Override
@@ -62,12 +86,9 @@ public class CreateEventFragment extends Fragment {
         createEventViewModel = new ViewModelProvider(this).get(CreateEventViewModel.class);
         authViewModel = new ViewModelProvider(requireActivity()).get(AuthViewModel.class);
 
-        // Initialize start time to next hour, end time 2 hours after that.
+        // Ustawienie domyślnych dat i godzin
         startDateTimeCalendar.add(Calendar.HOUR_OF_DAY, 1);
         startDateTimeCalendar.set(Calendar.MINUTE, 0);
-        startDateTimeCalendar.set(Calendar.SECOND, 0);
-        startDateTimeCalendar.set(Calendar.MILLISECOND, 0);
-
         endDateTimeCalendar.setTime(startDateTimeCalendar.getTime());
         endDateTimeCalendar.add(Calendar.HOUR_OF_DAY, 2);
     }
@@ -80,9 +101,9 @@ public class CreateEventFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        createEventViewModel.resetFormAndState();
         bindViews(view);
         setupClickListeners();
+        setupLocationSpinner();
         observeViewModels();
         updateSelectedDateTimeDisplay();
     }
@@ -92,26 +113,46 @@ public class CreateEventFragment extends Fragment {
         etEventName = view.findViewById(R.id.et_event_name_create);
         tilEventDescription = view.findViewById(R.id.til_event_description_create);
         etEventDescription = view.findViewById(R.id.et_event_description_create);
-        tilEventLocation = view.findViewById(R.id.til_event_location_create);
-        etEventLocation = view.findViewById(R.id.et_event_location_create);
         tilMaxParticipants = view.findViewById(R.id.til_event_max_participants_create);
         etMaxParticipants = view.findViewById(R.id.et_event_max_participants_create);
+        rgLocationType = view.findViewById(R.id.rg_location_type);
+        llNewLocationInputs = view.findViewById(R.id.ll_new_location_inputs);
+        llExistingLocationSelection = view.findViewById(R.id.ll_existing_location_selection);
+        tilStreetName = view.findViewById(R.id.til_street_name_create);
+        etStreetName = view.findViewById(R.id.et_street_name_create);
+        tilStreetNumber = view.findViewById(R.id.til_street_number_create);
+        etStreetNumber = view.findViewById(R.id.et_street_number_create);
+        tilApartment = view.findViewById(R.id.til_apartment_create);
+        etApartment = view.findViewById(R.id.et_apartment_create);
+        tilPostalCode = view.findViewById(R.id.til_postal_code_create);
+        etPostalCode = view.findViewById(R.id.et_postal_code_create);
+        tilCity = view.findViewById(R.id.til_city_create);
+        etCity = view.findViewById(R.id.et_city_create);
+        tilRegion = view.findViewById(R.id.til_region_create);
+        etRegion = view.findViewById(R.id.et_region_create);
+        tilCountryIso = view.findViewById(R.id.til_country_iso_create);
+        etCountryIso = view.findViewById(R.id.et_country_iso_create);
 
+        // Bind new latitude and longitude fields
+        tilLatitude = view.findViewById(R.id.til_latitude_create);
+        etLatitude = view.findViewById(R.id.et_latitude_create);
+        tilLongitude = view.findViewById(R.id.til_longitude_create);
+        etLongitude = view.findViewById(R.id.et_longitude_create);
+
+        spinnerExistingLocations = view.findViewById(R.id.spinner_existing_locations);
+        pbLocationsLoading = view.findViewById(R.id.pb_locations_loading);
+        tvNoExistingLocations = view.findViewById(R.id.tv_no_existing_locations);
         btnSelectEventStartDate = view.findViewById(R.id.btn_select_event_start_date);
         tvSelectedEventStartDate = view.findViewById(R.id.tv_selected_event_start_date);
         btnSelectEventStartTime = view.findViewById(R.id.btn_select_event_start_time);
         tvSelectedEventStartTime = view.findViewById(R.id.tv_selected_event_start_time);
-
         btnSelectEventEndDate = view.findViewById(R.id.btn_select_event_end_date);
         tvSelectedEventEndDate = view.findViewById(R.id.tv_selected_event_end_date);
         btnSelectEventEndTime = view.findViewById(R.id.btn_select_event_end_time);
         tvSelectedEventEndTime = view.findViewById(R.id.tv_selected_event_end_time);
-
-        switchEventPublic = view.findViewById(R.id.switch_event_public_create); // Bind the switch
-
-        btnAddEventPhotos = view.findViewById(R.id.btn_add_event_photos);
+        switchEventPublic = view.findViewById(R.id.switch_event_public_create);
         btnCreateEventSubmit = view.findViewById(R.id.btn_create_event_submit);
-        ivUserIcon = view.findViewById(R.id.iv_user_icon_create_event);
+        // Removed: ivUserIcon = view.findViewById(R.id.iv_user_icon_create_event);
         pbCreateEventLoading = view.findViewById(R.id.pb_create_event_loading);
     }
 
@@ -120,175 +161,244 @@ public class CreateEventFragment extends Fragment {
         btnSelectEventStartTime.setOnClickListener(v -> showTimePickerDialog(startDateTimeCalendar, this::updateSelectedDateTimeDisplay));
         btnSelectEventEndDate.setOnClickListener(v -> showDatePickerDialog(endDateTimeCalendar, this::updateSelectedDateTimeDisplay));
         btnSelectEventEndTime.setOnClickListener(v -> showTimePickerDialog(endDateTimeCalendar, this::updateSelectedDateTimeDisplay));
-
         btnCreateEventSubmit.setOnClickListener(v -> attemptEventCreation());
 
-        btnAddEventPhotos.setOnClickListener(v -> {
-            Toast.makeText(getContext(), "Add event photos - Not Implemented", Toast.LENGTH_SHORT).show();
-        });
+        // Removed: ivUserIcon.setOnClickListener(v -> { ... });
 
-        ivUserIcon.setOnClickListener(v -> {
-            if (getView() == null) return;
-            NavController navController = Navigation.findNavController(getView());
-            if (currentAuthToken != null && loggedInUserId != null) {
-                Bundle profileArgs = new Bundle();
-                profileArgs.putString("userId", loggedInUserId);
-                // This action might not exist from CreateEventFragment, adjust nav graph or remove.
-                // For now, assume it's a placeholder or you'll add the action.
-                try {
-                    // navController.navigate(R.id.action_createEventFragment_to_profileFragment, profileArgs);
-                    Toast.makeText(getContext(), "Profile navigation from here is TBD.", Toast.LENGTH_SHORT).show();
-                } catch (IllegalArgumentException e) {
-                    Toast.makeText(getContext(), "Navigation to profile not set up from here.", Toast.LENGTH_SHORT).show();
-                }
-            } else {
-                navController.navigate(R.id.loginActivity);
+        rgLocationType.setOnCheckedChangeListener((group, checkedId) -> {
+            boolean isNewLocation = checkedId == R.id.rb_new_location;
+            llNewLocationInputs.setVisibility(isNewLocation ? View.VISIBLE : View.GONE);
+            llExistingLocationSelection.setVisibility(isNewLocation ? View.GONE : View.VISIBLE);
+            if (!isNewLocation && currentAuthToken != null) {
+                createEventViewModel.fetchLocationsForSelection(currentAuthToken);
             }
         });
     }
 
-    private void showDatePickerDialog(Calendar calendarToUpdate, Runnable onDateTimeUpdate) {
-        if (getContext() == null) return;
-        new DatePickerDialog(getContext(), (view, year, month, dayOfMonth) -> {
-            calendarToUpdate.set(Calendar.YEAR, year);
-            calendarToUpdate.set(Calendar.MONTH, month);
-            calendarToUpdate.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-            if (onDateTimeUpdate != null) {
-                onDateTimeUpdate.run();
+    private void setupLocationSpinner() {
+        existingLocationsAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, new ArrayList<>());
+        existingLocationsAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerExistingLocations.setAdapter(existingLocationsAdapter);
+        spinnerExistingLocations.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                createEventViewModel.setSelectedLocationPosition(position);
             }
-        }, calendarToUpdate.get(Calendar.YEAR), calendarToUpdate.get(Calendar.MONTH), calendarToUpdate.get(Calendar.DAY_OF_MONTH))
-                .show();
-    }
-
-    private void showTimePickerDialog(Calendar calendarToUpdate, Runnable onDateTimeUpdate) {
-        if (getContext() == null) return;
-        new TimePickerDialog(getContext(), (view, hourOfDay, minute) -> {
-            calendarToUpdate.set(Calendar.HOUR_OF_DAY, hourOfDay);
-            calendarToUpdate.set(Calendar.MINUTE, minute);
-            calendarToUpdate.set(Calendar.SECOND, 0);
-            calendarToUpdate.set(Calendar.MILLISECOND, 0);
-            if (onDateTimeUpdate != null) {
-                onDateTimeUpdate.run();
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                createEventViewModel.setSelectedLocationPosition(-1);
             }
-        }, calendarToUpdate.get(Calendar.HOUR_OF_DAY), calendarToUpdate.get(Calendar.MINUTE), true)
-                .show();
-    }
-
-    private void updateSelectedDateTimeDisplay() {
-        tvSelectedEventStartDate.setText(getString(R.string.selected_date_prefix_create) + dateFormat.format(startDateTimeCalendar.getTime()));
-        tvSelectedEventStartTime.setText(getString(R.string.selected_time_prefix_create) + timeFormat.format(startDateTimeCalendar.getTime()));
-        tvSelectedEventEndDate.setText(getString(R.string.selected_date_prefix_create) + dateFormat.format(endDateTimeCalendar.getTime()));
-        tvSelectedEventEndTime.setText(getString(R.string.selected_time_prefix_create) + timeFormat.format(endDateTimeCalendar.getTime()));
-    }
-
-    private void attemptEventCreation() {
-        tilEventName.setError(null);
-        tilEventDescription.setError(null);
-        tilEventLocation.setError(null);
-        tilMaxParticipants.setError(null);
-
-        String title = etEventName.getText().toString().trim();
-        String description = etEventDescription.getText().toString().trim();
-        String location = etEventLocation.getText().toString().trim();
-        String maxParticipantsStr = etMaxParticipants.getText().toString().trim();
-
-        boolean isValid = true;
-        if (TextUtils.isEmpty(title)) {
-            tilEventName.setError(getString(R.string.error_field_required));
-            isValid = false;
-        }
-        if (TextUtils.isEmpty(description)) {
-            tilEventDescription.setError(getString(R.string.error_field_required));
-            isValid = false;
-        }
-        if (TextUtils.isEmpty(location)) {
-            tilEventLocation.setError(getString(R.string.error_field_required));
-            isValid = false;
-        }
-
-        int maxParticipantsInt = 0;
-        if (TextUtils.isEmpty(maxParticipantsStr)) {
-            tilMaxParticipants.setError(getString(R.string.error_field_required));
-            isValid = false;
-        } else {
-            try {
-                maxParticipantsInt = Integer.parseInt(maxParticipantsStr);
-                if (maxParticipantsInt <= 0) {
-                    tilMaxParticipants.setError(getString(R.string.error_positive_number_required));
-                    isValid = false;
-                }
-            } catch (NumberFormatException e) {
-                tilMaxParticipants.setError(getString(R.string.error_invalid_number_format));
-                isValid = false;
-            }
-        }
-
-        if (startDateTimeCalendar.getTime().after(endDateTimeCalendar.getTime())) {
-            Toast.makeText(getContext(), R.string.toast_end_date_after_start, Toast.LENGTH_LONG).show();
-            isValid = false;
-        }
-        Calendar now = Calendar.getInstance();
-        if (startDateTimeCalendar.before(now)) {
-            Toast.makeText(getContext(), "Start date and time cannot be in the past.", Toast.LENGTH_LONG).show();
-            isValid = false;
-        }
-
-
-        if (!isValid) return;
-
-        if (currentAuthToken == null) {
-            Toast.makeText(getContext(), R.string.toast_login_to_create, Toast.LENGTH_LONG).show();
-            if(getView() != null) Navigation.findNavController(getView()).navigate(R.id.loginActivity);
-            return;
-        }
-
-        EventModel newEvent = new EventModel();
-        newEvent.setTitle(title);
-        newEvent.setDescription(description);
-        newEvent.setStartDate(startDateTimeCalendar.getTime());
-        newEvent.setEndDate(endDateTimeCalendar.getTime());
-        newEvent.setLocation(location);
-        newEvent.setMaxParticipants(maxParticipantsInt);
-        newEvent.setPublic(switchEventPublic.isChecked()); // Get the value from the switch
-
-        createEventViewModel.submitCreateEvent(newEvent, currentAuthToken);
+        });
     }
 
     private void observeViewModels() {
         authViewModel.currentJwtToken.observe(getViewLifecycleOwner(), token -> {
             currentAuthToken = token;
-            btnCreateEventSubmit.setEnabled(token != null && !(createEventViewModel.createEventOperationState.getValue() instanceof ResultWrapper.Loading));
+            if (token != null && rgLocationType.getCheckedRadioButtonId() == R.id.rb_existing_location) {
+                createEventViewModel.fetchLocationsForSelection(token);
+            }
         });
+
         authViewModel.currentUserId.observe(getViewLifecycleOwner(), userId -> {
             loggedInUserId = userId;
-            if (ivUserIcon != null) {
-                if (userId != null) {
-                    ivUserIcon.setImageResource(R.drawable.ic_profile);
+            // Removed: ivUserIcon.setImageResource(userId != null ? R.drawable.ic_profile : R.drawable.ic_login);
+        });
+
+        createEventViewModel.availableLocationsState.observe(getViewLifecycleOwner(), result -> {
+            handleVisibility(pbLocationsLoading, result instanceof ResultWrapper.Loading);
+            if (result instanceof ResultWrapper.Success) {
+                List<LocationData> locations = ((ResultWrapper.Success<List<LocationData>>) result).getData();
+                if (locations != null && !locations.isEmpty()) {
+                    availableLocations = locations;
+                    List<String> locationNames = new ArrayList<>();
+                    for (LocationData loc : locations) {
+                        locationNames.add(loc.getFullAddress() != null ? loc.getFullAddress() : "Unnamed Location");
+                    }
+                    existingLocationsAdapter.clear();
+                    existingLocationsAdapter.addAll(locationNames);
+                    existingLocationsAdapter.notifyDataSetChanged();
+                    spinnerExistingLocations.setVisibility(View.VISIBLE);
+                    tvNoExistingLocations.setVisibility(View.GONE);
                 } else {
-                    ivUserIcon.setImageResource(R.drawable.ic_login);
+                    spinnerExistingLocations.setVisibility(View.GONE);
+                    tvNoExistingLocations.setVisibility(View.VISIBLE);
                 }
+            } else if (result instanceof ResultWrapper.Error) {
+                spinnerExistingLocations.setVisibility(View.GONE);
+                tvNoExistingLocations.setVisibility(View.VISIBLE);
+                Toast.makeText(getContext(), "Error fetching locations", Toast.LENGTH_SHORT).show();
             }
         });
 
         createEventViewModel.createEventOperationState.observe(getViewLifecycleOwner(), result -> {
             handleVisibility(pbCreateEventLoading, result instanceof ResultWrapper.Loading);
-            btnCreateEventSubmit.setEnabled(!(result instanceof ResultWrapper.Loading) && currentAuthToken != null);
-
+            btnCreateEventSubmit.setEnabled(!(result instanceof ResultWrapper.Loading));
             if (result instanceof ResultWrapper.Success) {
                 Toast.makeText(getContext(), R.string.toast_event_created_successfully, Toast.LENGTH_LONG).show();
                 if (getView() != null) {
                     Navigation.findNavController(getView()).navigate(R.id.action_createEventFragment_to_mainFragment);
                 }
             } else if (result instanceof ResultWrapper.Error) {
-                ResultWrapper.Error<?> errorResult = (ResultWrapper.Error<?>) result;
-                String errorMessage = errorResult.getMessage();
-                Toast.makeText(getContext(), getString(R.string.toast_failed_to_create_event, (errorMessage != null ? errorMessage : getString(R.string.error_unknown))), Toast.LENGTH_LONG).show();
+                Toast.makeText(getContext(), "Failed to create event: " + ((ResultWrapper.Error<?>) result).getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }
-    private void handleVisibility(View view, boolean isLoading) {
+
+    private void attemptEventCreation() {
+        // Clear previous errors
+        tilEventName.setError(null);
+        tilEventDescription.setError(null);
+        tilMaxParticipants.setError(null);
+        tilStreetName.setError(null);
+        tilStreetNumber.setError(null);
+        tilPostalCode.setError(null);
+        tilCity.setError(null);
+        tilRegion.setError(null);
+        tilCountryIso.setError(null);
+        tilLatitude.setError(null);
+        tilLongitude.setError(null);
+
+        if (!validateInputs()) return;
+
+        String name = etEventName.getText().toString().trim();
+        String description = etEventDescription.getText().toString().trim();
+        Integer maxParticipantsInt = null;
+        try {
+            if (!etMaxParticipants.getText().toString().isEmpty()) {
+                maxParticipantsInt = Integer.parseInt(etMaxParticipants.getText().toString());
+                if (maxParticipantsInt <= 0) {
+                    tilMaxParticipants.setError(getString(R.string.error_positive_number_required));
+                    return;
+                }
+            }
+        } catch (NumberFormatException e) {
+            tilMaxParticipants.setError(getString(R.string.error_invalid_number_format));
+            return;
+        }
+
+        EventCreationRequest newEventRequest;
+        if (rgLocationType.getCheckedRadioButtonId() == R.id.rb_new_location) {
+            Double latitude = null;
+            Double longitude = null;
+
+            if (!etLatitude.getText().toString().isEmpty()) {
+                try {
+                    latitude = Double.parseDouble(etLatitude.getText().toString());
+                } catch (NumberFormatException e) {
+                    tilLatitude.setError("Invalid latitude format");
+                    return;
+                }
+            }
+            if (!etLongitude.getText().toString().isEmpty()) {
+                try {
+                    longitude = Double.parseDouble(etLongitude.getText().toString());
+                } catch (NumberFormatException e) {
+                    tilLongitude.setError("Invalid longitude format");
+                    return;
+                }
+            }
+
+
+            LocationCreationRequest newLocationRequest = new LocationCreationRequest(
+                    etStreetName.getText().toString().trim(),
+                    etStreetNumber.getText().toString().trim(),
+                    etApartment.getText().toString().trim(),
+                    etPostalCode.getText().toString().trim(),
+                    etCity.getText().toString().trim(),
+                    etRegion.getText().toString().trim(),
+                    etCountryIso.getText().toString().trim(),
+                    latitude != null ? latitude : 0.0,
+                    longitude != null ? longitude : 0.0
+            );
+            newEventRequest = new EventCreationRequest(name, description, startDateTimeCalendar.getTime(), endDateTimeCalendar.getTime(), switchEventPublic.isChecked(), maxParticipantsInt, newLocationRequest);
+        } else {
+            LocationData selectedLocation = createEventViewModel.getSelectedLocation();
+            if (selectedLocation == null) {
+                Toast.makeText(getContext(), R.string.no_existing_location_selected, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            newEventRequest = new EventCreationRequest(name, description, startDateTimeCalendar.getTime(), endDateTimeCalendar.getTime(), switchEventPublic.isChecked(), maxParticipantsInt, selectedLocation.getId());
+        }
+
+        createEventViewModel.submitCreateEvent(newEventRequest, currentAuthToken);
+    }
+
+    private boolean validateInputs() {
+        boolean isValid = true;
+
+        if (etEventName.getText().toString().trim().isEmpty()) {
+            tilEventName.setError(getString(R.string.error_field_required));
+            isValid = false;
+        }
+        if (etEventDescription.getText().toString().trim().isEmpty()) {
+            tilEventDescription.setError(getString(R.string.error_field_required));
+            isValid = false;
+        }
+
+        if (rgLocationType.getCheckedRadioButtonId() == R.id.rb_new_location) {
+            if (etStreetName.getText().toString().trim().isEmpty()) {
+                tilStreetName.setError(getString(R.string.error_field_required));
+                isValid = false;
+            }
+            if (etStreetNumber.getText().toString().trim().isEmpty()) {
+                tilStreetNumber.setError(getString(R.string.error_field_required));
+                isValid = false;
+            }
+            if (etPostalCode.getText().toString().trim().isEmpty()) {
+                tilPostalCode.setError(getString(R.string.error_field_required));
+                isValid = false;
+            }
+            if (etCity.getText().toString().trim().isEmpty()) {
+                tilCity.setError(getString(R.string.error_field_required));
+                isValid = false;
+            }
+            if (etRegion.getText().toString().trim().isEmpty()) {
+                tilRegion.setError(getString(R.string.error_field_required));
+                isValid = false;
+            }
+            if (etCountryIso.getText().toString().trim().isEmpty()) {
+                tilCountryIso.setError(getString(R.string.error_field_required));
+                isValid = false;
+            }
+        } else if (createEventViewModel.getSelectedLocation() == null) {
+            Toast.makeText(getContext(), R.string.no_existing_location_selected, Toast.LENGTH_SHORT).show();
+            isValid = false;
+        }
+
+        if (startDateTimeCalendar.after(endDateTimeCalendar)) {
+            Toast.makeText(getContext(), R.string.toast_end_date_after_start, Toast.LENGTH_LONG).show();
+            isValid = false;
+        }
+        return isValid;
+    }
+
+    private void updateSelectedDateTimeDisplay() {
+        tvSelectedEventStartDate.setText(dateFormat.format(startDateTimeCalendar.getTime()));
+        tvSelectedEventStartTime.setText(timeFormat.format(startDateTimeCalendar.getTime()));
+        tvSelectedEventEndDate.setText(dateFormat.format(endDateTimeCalendar.getTime()));
+        tvSelectedEventEndTime.setText(timeFormat.format(endDateTimeCalendar.getTime()));
+    }
+
+    private void showDatePickerDialog(Calendar calendar, Runnable onUpdate) {
+        if (getContext() == null) return;
+        new DatePickerDialog(getContext(), (view, year, month, day) -> {
+            calendar.set(year, month, day);
+            onUpdate.run();
+        }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
+    }
+
+    private void showTimePickerDialog(Calendar calendar, Runnable onUpdate) {
+        if (getContext() == null) return;
+        new TimePickerDialog(getContext(), (view, hour, minute) -> {
+            calendar.set(Calendar.HOUR_OF_DAY, hour);
+            calendar.set(Calendar.MINUTE, minute);
+            onUpdate.run();
+        }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true).show();
+    }
+
+    private void handleVisibility(View view, boolean isVisible) {
         if (view != null) {
-            view.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+            view.setVisibility(isVisible ? View.VISIBLE : View.GONE);
         }
     }
 }

@@ -9,6 +9,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.event_hub.MainActivity;
 import com.example.event_hub.R;
 import com.example.event_hub.ViewModel.AuthViewModel;
 import com.example.event_hub.Model.ResultWrapper;

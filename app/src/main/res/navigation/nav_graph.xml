@@ -41,7 +41,7 @@
         tools:layout="@layout/fragment_event_detail" >
         <argument
             android:name="eventId"
-            app:argType="string" />
+            app:argType="long" />
         <action
             android:id="@+id/action_eventDetailFragment_to_mapFragment"
             app:destination="@id/mapFragment" />
@@ -66,6 +66,9 @@
             app:destination="@id/mainFragment"
             app:popUpTo="@id/mainFragment"
             app:popUpToInclusive="true"/>
+        <action
+            android:id="@+id/action_createEventFragment_to_profileFragment"
+            app:destination="@id/profileFragment" />
     </fragment>
 
     <fragment
@@ -75,9 +78,9 @@
         tools:layout="@layout/fragment_profile" >
         <argument
             android:name="userId"
-            app:argType="string"
-            app:nullable="true"
-            android:defaultValue="@null" />
+            app:argType="long"
+            app:nullable="false"
+            android:defaultValue="0L" />
     </fragment>
 
     <fragment
@@ -87,12 +90,12 @@
         tools:layout="@layout/fragment_map" >
         <argument
             android:name="eventId"
+            app:argType="long"
+            android:defaultValue="0L" />
+        <argument
+            android:name="eventName"
             app:argType="string"
             app:nullable="true" />
-        <argument
-            android:name="eventLocation"
-            app:argType="string"
-            app:nullable="true"/>
     </fragment>
 
     <fragment
@@ -102,7 +105,7 @@
         tools:layout="@layout/fragment_invite_users" >
         <argument
             android:name="eventId"
-            app:argType="string" />
+            app:argType="long" />
     </fragment>
 
 </navigation>

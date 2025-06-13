@@ -10,7 +10,7 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide; // Import Glide
+import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.event_hub.Model.MediaModel;
@@ -26,7 +26,7 @@ public class EventPhotoAdapter extends RecyclerView.Adapter<EventPhotoAdapter.Ev
     private final OnPhotoClickListener onPhotoClickListener;
 
     public interface OnPhotoClickListener {
-        void onPhotoClick(MediaModel mediaItem, View sharedImageView); // Added sharedImageView for transitions
+        void onPhotoClick(MediaModel mediaItem, View sharedImageView);
     }
 
     public EventPhotoAdapter(List<MediaModel> initialMediaItems, OnPhotoClickListener onPhotoClickListener) {
@@ -71,21 +71,20 @@ public class EventPhotoAdapter extends RecyclerView.Adapter<EventPhotoAdapter.Ev
         }
 
         public void bind(final MediaModel mediaItem, final OnPhotoClickListener clickListener) {
-            // Set a unique transition name for shared element transition
             String transitionName = "photo_" + mediaItem.getMediaId();
             ivEventPhoto.setTransitionName(transitionName);
 
-            if (mediaItem.getMediaFileReference() != null && !mediaItem.getMediaFileReference().isEmpty()) {
+            // Corrected: Use getDownloadUrl() instead of getMediaFileReference()
+            if (mediaItem.getDownloadUrl() != null && !mediaItem.getDownloadUrl().isEmpty()) {
                 Glide.with(itemView.getContext())
-                        .load(mediaItem.getMediaFileReference()) // This should be a URL or valid file path
+                        .load(mediaItem.getDownloadUrl()) // Use getDownloadUrl()
                         .apply(new RequestOptions()
-                                .placeholder(R.drawable.ic_placeholder_image) // Placeholder while loading
-                                .error(R.drawable.ic_placeholder_image_error) // Error placeholder if load fails
-                                .diskCacheStrategy(DiskCacheStrategy.ALL) // Cache strategy
-                                .centerCrop()) // Or .fitCenter() depending on desired scaling
+                                .placeholder(R.drawable.ic_placeholder_image)
+                                .error(R.drawable.ic_placeholder_image_error)
+                                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                                .centerCrop())
                         .into(ivEventPhoto);
             } else {
-                // Fallback if no image reference
                 Glide.with(itemView.getContext())
                         .load(R.drawable.ic_placeholder_image)
                         .centerCrop()
@@ -94,7 +93,7 @@ public class EventPhotoAdapter extends RecyclerView.Adapter<EventPhotoAdapter.Ev
 
             itemView.setOnClickListener(v -> {
                 if (clickListener != null) {
-                    clickListener.onPhotoClick(mediaItem, ivEventPhoto); // Pass the ImageView for transition
+                    clickListener.onPhotoClick(mediaItem, ivEventPhoto);
                 }
             });
         }
@@ -124,9 +123,10 @@ public class EventPhotoAdapter extends RecyclerView.Adapter<EventPhotoAdapter.Ev
         public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
             MediaModel oldMedia = oldList.get(oldItemPosition);
             MediaModel newMedia = newList.get(newItemPosition);
-            return Objects.equals(oldMedia.getMediaFileReference(), newMedia.getMediaFileReference()) &&
-                    Objects.equals(oldMedia.getDescription(), newMedia.getDescription()) &&
-                    Objects.equals(oldMedia.getMediaType(), newMedia.getMediaType()); // Compare more fields if needed
+            // Corrected: Use getDownloadUrl() instead of getMediaFileReference()
+            // Removed comparison for getDescription() as MediaModel does not have this field.
+            return Objects.equals(oldMedia.getDownloadUrl(), newMedia.getDownloadUrl()) &&
+                    Objects.equals(oldMedia.getMediaType(), newMedia.getMediaType());
         }
 
         @Nullable

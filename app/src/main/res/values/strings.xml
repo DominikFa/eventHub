@@ -74,6 +74,8 @@
     <string name="error_field_required">Required</string>
     <string name="error_positive_number_required">Valid positive number required</string>
     <string name="error_invalid_number_format">Invalid number format</string>
+    <string name="no_existing_location_selected">No existing location selected.</string>
+    <string name="select_location_type">Please select a location type (New or Existing).</string>
 
 
     <string name="profile_title">My Profile</string>
@@ -146,6 +148,124 @@
     <string name="content_desc_user_profile_icon">User profile icon</string>
     <string name="content_desc_user_profile">User Profile Icon</string>
     <string name="switch_make_event_public">Make Event Public?</string>
+    <string name="back_button_desc">Back button</string>
+    <string name="event_logo_desc">Event logo image</string>
+    <string name="btn_join_event">Join Event</string>
+    <string name="btn_leave_event">Leave Event</string>
+    <string name="btn_invite_users">Invite Users</string>
+    <string name="btn_delete_event">Delete Event</string>
+    <string name="header_participants">Participants</string>
+    <string name="no_participants_yet">No participants yet.</string>
+    <string name="header_media">Media Gallery</string>
+    <string name="no_media_yet">No media uploaded yet.</string>
+    <string name="event_status_public">Public</string>
+    <string name="event_status_private">Private</string>
+    <string name="participants_count">Participants: %1$d</string>
+    <string name="toast_login_to_join_leave">Please login to join or leave events.</string>
+    <string name="dialog_title_delete_event_confirm">Delete Event</string>
+    <string name="dialog_message_delete_event_confirm">Are you sure you want to delete \"%1$s\"? This action cannot be undone.</string>
+    <string name="error_event_not_found">Event not found.</string>
+    <string name="error_loading_event_details">Error loading event details</string>
+    <string name="error_loading_participants_prefix">Error loading participants: </string>
+    <string name="error_loading_media_prefix">Error loading media: </string>
+    <string name="auth_required_to_send_invites_long">Authentication is required to send invitations. Please log in.</string>
+    <string name="toast_event_edited_successfully">Event updated successfully!</string>
+    <string name="toast_failed_to_edit_event">Failed to update event: %1$s</string>
+    <string name="register_screen_title">Register</string>
+    <string name="hint_email_register">Email</string>
+    <string name="hint_password_register">Password</string>
+    <string name="already_have_account_login_prompt">Masz już konto? Zaloguj się!</string>
+    <string name="no_created_events_found">No events created by you found for this date.</string>
+    <string name="error_loading_created_events_prefix">Error loading created events: </string>
+    <string name="login_to_see_created_events_detail">Please log in to see events you have created.</string>
+    <string name="radio_new_location">New Location</string>
+    <string name="radio_existing_location">Existing Location</string>
+    <string name="hint_street_name">Street Name</string>
+    <string name="hint_street_number">Street No.</string>
+    <string name="hint_apartment">Apartment (Optional)</string>
+    <string name="hint_postal_code">Postal Code</string>
+    <string name="hint_city">City</string>
+    <string name="hint_region">Region/State</string>
+    <string name="hint_country_iso">Country Code (ISO)</string>
+    <string name="select_existing_location_prompt">Select an existing location:</string>
+    <string name="no_existing_locations_found">No existing locations found or loaded.</string>
+    <string name="error_fetching_locations">Error fetching locations: %1$s</string>
+    <string name="app_name_display">EventHub</string>
 
+
+    <string name="title_activity_login">Login</string>
+    <string name="login_screen_title">Logowanie</string>
+    <string name="hint_login">Login</string>
+    <string name="hint_password">Hasło</string>
+
+    <string name="register_prompt">Nie masz konta? Zarejestruj się!</string>
+    <string name="login_failed">Login Failed</string>
+    <string name="login_cannot_be_empty">Login cannot be empty</string>
+    <string name="password_cannot_be_empty">Password cannot be empty</string>
+    <string name="login_in_progress">Logging in...</string>
+
+    <string name="title_activity_register">Register</string>
+
+    <string name="hint_name_register">Name (e.g., John Doe)</string>
+
+
+    <string name="already_have_account_login_prompt_english">Already have an account? Log in!</string>
+    <string name="registration_successful">Registration successful! Please log in.</string>
+    <string name="name_cannot_be_empty">Name cannot be empty</string>
+    <string name="email_cannot_be_empty">Email cannot be empty</string>
+    <string name="enter_valid_email">Enter a valid email address</string>
+    <string name="password_min_length">Password must be at least 6 characters</string>
+
+    <string name="bottom_nav_attending">Attending</string>
+    <string name="bottom_nav_public">Public</string>
+    <string name="bottom_nav_invitations">Invitations</string>
+    <string name="bottom_nav_my_events">My Events</string>
+    <string name="bottom_nav_create">Create</string>
+
+    <string name="event_detail_title">Wydarzenie</string>
+    <string name="photos_title">Zdjęcia z wydarzenia</string>
+    <string name="participants_title">Lista uczestników</string>
+
+    <string name="organizer_only_invite">Only the organizer can invite users.</string>
+
+    <string name="event_location_not_available">Event location not available.</string>
+    <string name="upload_photo_not_implemented">Upload photo functionality not yet implemented.</string>
+    <string name="event_action_successful">Event action successful!</string>
+    <string name="event_action_failed">Event action failed: %1$s</string>
+    <string name="unknown_error">Unknown error</string>
+
+    <string name="organizer_only_remove_participants">Only the organizer can remove participants.</string>
+    <string name="cannot_remove_participant_missing_data">Cannot remove participant: missing data.</string>
+    <string name="viewing_photo_not_implemented">Viewing photo: %1$s (Not Implemented)</string>
+
+    <string name="btn_get_directions">Jak dojechać</string>
+    <string name="btn_invite">Zaproś</string>
+    <string name="btn_upload_photo">Upload Photo</string>
+
+
+    <string name="edit_profile_not_implemented">Edit Profile UI not implemented.</string>
+    <string name="profile_or_auth_missing">Profile data or authentication missing.</string>
+    <string name="error_event_id_missing">Error: Event ID is missing. Cannot invite users.</string>
+    <string name="auth_required_for_invites">Authentication is required to invite users.</string>
+    <string name="no_users_selected">Please select at least one user to invite.</string>
+    <string name="sending_invites">Sending invitations...</string>
+    <string name="error_fetching_users">Error fetching users: %1$s</string>
+    <string name="search_for_users_to_invite">Search for users to invite them to the event.</string>
+    <string name="invitation_error_generic">An error occurred while sending an invitation.</string>
+    <string name="no_users_found">No users found.</string>
+    <string name="login_to_create_event">Please login to create an event.</string>
+    <string name="invitation_action_successful">Invitation action successful!</string>
+    <string name="invitation_action_failed">Invitation action failed: %1$s</string>
+    <string name="main_fragment_title">EventHub</string>
+    <string name="content_desc_profile_or_login_button">Login or Profile Button</string>
+    <string name="select_date_button_text">Select Date</string>
+    <string name="no_items_found">No items found.</string>
+    <string name="map_invalid_coordinates_format">Invalid coordinates. Location cannot be displayed.</string>
+    <string name="content_desc_static_map">Static map image of the event location</string>
+    <string name="search_users_by_name_hint">Search by Name</string>
+    <string name="search_users_by_login_hint">Search by Login</string>
+    <string name="apply_filters_button">Apply Filters</string>
+    <string name="invitations_sent_with_some_failures">%1$d invitations sent, %2$d failed.</string>
+    <string name="invitations_sent_all_failed">All invitations failed to send.</string>
 
 </resources>

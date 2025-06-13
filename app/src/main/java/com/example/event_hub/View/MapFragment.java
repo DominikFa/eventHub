@@ -1,15 +1,15 @@
+// src/main/java/com/example/event_hub/View/MapFragment.java
 package com.example.event_hub.View;
 
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
-import android.location.Address;
-import android.location.Geocoder;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -19,269 +19,182 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.bumptech.glide.Glide;
 import com.example.event_hub.Model.LocationData;
 import com.example.event_hub.Model.ResultWrapper;
 import com.example.event_hub.R;
 import com.example.event_hub.ViewModel.MapViewModel;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.button.MaterialButton;
 
-import java.io.IOException;
-import java.lang.ref.WeakReference;
-import java.util.List;
 import java.util.Locale;
 
-public class MapFragment extends Fragment implements OnMapReadyCallback {
+public class MapFragment extends Fragment { // Does NOT implement OnMapReadyCallback anymore
+
+    private static final String TAG = "MapFragment";
 
     private MapViewModel mapViewModel;
-    private GoogleMap googleMap;
-    private SupportMapFragment mapFragment;
 
     private ProgressBar pbMapLoading;
     private TextView tvMapErrorOrInfo;
     private MaterialButton btnOpenInMapsApp;
+    private ImageView ivStaticMap; // ImageView for static map
 
-    private String eventIdArg;
-    private String eventLocationArg;
-    private LocationData currentLocationData; // To store resolved location
+    private long eventIdArg;
+    private String eventNameArg; // Keep eventName for map marker title
+
+    private LocationData currentLocationData; // Stores the location data for external map app button
 
     public MapFragment() {
-        // Required empty public constructor
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mapViewModel = new ViewModelProvider(this).get(MapViewModel.class);
+        mapViewModel = new ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication())).get(MapViewModel.class);
 
         if (getArguments() != null) {
-            eventIdArg = getArguments().getString("eventId");
-            eventLocationArg = getArguments().getString("eventLocation");
+            eventIdArg = getArguments().getLong("eventId", 0L); // Default to 0L if not found
+            eventNameArg = getArguments().getString("eventName");
+            Log.d(TAG, "onCreate: Received arguments - eventId: " + eventIdArg + ", eventName: " + eventNameArg);
         }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Log.d(TAG, "onCreateView: MapFragment creating view.");
         return inflater.inflate(R.layout.fragment_map, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        Log.d(TAG, "onViewCreated: MapFragment view created.");
 
         pbMapLoading = view.findViewById(R.id.pb_map_loading);
         tvMapErrorOrInfo = view.findViewById(R.id.tv_map_error_or_info);
         btnOpenInMapsApp = view.findViewById(R.id.btn_open_in_maps_app);
-        btnOpenInMapsApp.setEnabled(false);
-
-        mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map_container);
-        if (mapFragment == null) {
-            tvMapErrorOrInfo.setText("Error initializing map.");
-            tvMapErrorOrInfo.setVisibility(View.VISIBLE);
-            return;
-        }
-        mapFragment.getMapAsync(this);
+        btnOpenInMapsApp.setEnabled(false); // Disabled by default
+        ivStaticMap = view.findViewById(R.id.iv_static_map); // Initialize ImageView
+        ivStaticMap.setVisibility(View.GONE); // Hide initially
 
         setupClickListeners();
         observeViewModel();
 
-        if (eventLocationArg != null && !eventLocationArg.isEmpty()) {
-            mapViewModel.loadLocationFromString(eventLocationArg, "Event Location");
-        } else if (eventIdArg != null) {
-            tvMapErrorOrInfo.setText("Fetching event location by ID not yet implemented in ViewModel.");
-            tvMapErrorOrInfo.setVisibility(View.VISIBLE);
+        // Always attempt to fetch location details by event ID
+        if (eventIdArg > 0) {
+            Log.d(TAG, "onViewCreated: Fetching location by event ID: " + eventIdArg);
+            mapViewModel.fetchEventLocationDetailsById(eventIdArg);
         } else {
-            tvMapErrorOrInfo.setText("No location information provided.");
+            // If no valid event ID, display an error message
+            tvMapErrorOrInfo.setText(R.string.map_no_location_provided);
             tvMapErrorOrInfo.setVisibility(View.VISIBLE);
+            Log.e(TAG, "onViewCreated: No valid event ID provided.");
         }
     }
 
     private void setupClickListeners() {
         btnOpenInMapsApp.setOnClickListener(v -> openInExternalMaps());
+        Log.d(TAG, "setupClickListeners: External Maps button listener set.");
     }
 
     private void observeViewModel() {
-        mapViewModel.locationDataState.observe(getViewLifecycleOwner(), result -> {
+        // Observe staticMapImageUrlState for the image URL to display static map
+        mapViewModel.staticMapImageUrlState.observe(getViewLifecycleOwner(), result -> {
+            Log.d(TAG, "observeViewModel: StaticMapImageUrlState changed. Result type: " + result.getClass().getSimpleName());
             handleVisibility(pbMapLoading, result instanceof ResultWrapper.Loading);
-            tvMapErrorOrInfo.setVisibility(View.GONE);
+            tvMapErrorOrInfo.setVisibility(View.GONE); // Hide previous errors when new result comes
 
             if (result instanceof ResultWrapper.Success) {
-                LocationData locationData = ((ResultWrapper.Success<LocationData>) result).getData();
-                if (locationData != null) {
-                    this.currentLocationData = locationData;
-                    if (googleMap != null) {
-                        updateMapLocation(locationData);
-                    }
-                    btnOpenInMapsApp.setEnabled(true);
+                String imageUrl = ((ResultWrapper.Success<String>) result).getData();
+                if (imageUrl != null && !imageUrl.isEmpty()) {
+                    Log.d(TAG, "observeViewModel: Received successful image URL: " + imageUrl);
+                    Glide.with(this)
+                            .load(imageUrl)
+                            .placeholder(R.drawable.ic_placeholder_image) // Placeholder image
+                            .error(R.drawable.ic_placeholder_image_error) // Image to display on error
+                            .into(ivStaticMap);
+                    ivStaticMap.setVisibility(View.VISIBLE); // Make ImageView visible
                 } else {
-                    tvMapErrorOrInfo.setText("Location data is null.");
+                    tvMapErrorOrInfo.setText(R.string.map_location_data_null); // Or specific error
                     tvMapErrorOrInfo.setVisibility(View.VISIBLE);
-                    btnOpenInMapsApp.setEnabled(false);
+                    ivStaticMap.setVisibility(View.GONE); // Hide ImageView if no valid URL
+                    Log.e(TAG, "observeViewModel: Static Map URL is null or empty despite success state.");
                 }
             } else if (result instanceof ResultWrapper.Error) {
-                String error = ((ResultWrapper.Error<LocationData>) result).getMessage();
-                tvMapErrorOrInfo.setText("Error: " + error);
+                String error = ((ResultWrapper.Error<String>) result).getMessage();
+                tvMapErrorOrInfo.setText(getString(R.string.map_error_processing_location, error));
                 tvMapErrorOrInfo.setVisibility(View.VISIBLE);
+                ivStaticMap.setVisibility(View.GONE); // Hide ImageView on error
+                Toast.makeText(getContext(), getString(R.string.map_error_processing_location, error), Toast.LENGTH_LONG).show();
+                Log.e(TAG, "observeViewModel: Error in StaticMapImageUrlState: " + error);
+            }
+        });
+
+        // Observe locationDataForExternalApp for external app launch button enablement
+        mapViewModel.locationDataForExternalApp.observe(getViewLifecycleOwner(), result -> {
+            Log.d(TAG, "observeViewModel: LocationDataForExternalAppState changed. Result type: " + result.getClass().getSimpleName());
+            if (result instanceof ResultWrapper.Success) {
+                LocationData locationData = ((ResultWrapper.Success<LocationData>) result).getData();
+                // Ensure LocationData has valid non-zero latitude AND longitude for external app launch
+                if (locationData != null && locationData.getLatitude() != 0.0 && locationData.getLongitude() != 0.0) {
+                    this.currentLocationData = locationData; // Store valid location data for external app
+                    btnOpenInMapsApp.setEnabled(true);
+                    Log.d(TAG, "observeViewModel: External map button enabled with valid coordinates.");
+                } else {
+                    btnOpenInMapsApp.setEnabled(false);
+                    Log.e(TAG, "observeViewModel: External map button disabled due to invalid or zero coordinates.");
+                }
+            } else if (result instanceof ResultWrapper.Error) {
                 btnOpenInMapsApp.setEnabled(false);
-                Toast.makeText(getContext(), "Error processing location: " + error, Toast.LENGTH_LONG).show();
+                Log.e(TAG, "observeViewModel: External map button disabled due to error in location data for external app: " + ((ResultWrapper.Error<?>) result).getMessage());
+            } else if (result instanceof ResultWrapper.Loading) {
+                btnOpenInMapsApp.setEnabled(false); // Disable while loading
             }
         });
     }
 
-    @Override
-    public void onMapReady(@NonNull GoogleMap googleMap) {
-        this.googleMap = googleMap;
-        if (currentLocationData != null) {
-            updateMapLocation(currentLocationData);
-        } else {
-            LatLng defaultLocation = new LatLng(52.2297, 21.0122); // Warsaw
-            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 6));
-        }
-    }
-
-    private void updateMapLocation(LocationData locationData) {
-        if (googleMap == null) return;
-
-        if (locationData.getLatitude() != 0 && locationData.getLongitude() != 0) {
-            LatLng position = new LatLng(locationData.getLatitude(), locationData.getLongitude());
-            googleMap.clear();
-            googleMap.addMarker(new MarkerOptions().position(position).title(locationData.getEventTitle() != null ? locationData.getEventTitle() : "Event Location"));
-            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(position, 15));
-            tvMapErrorOrInfo.setVisibility(View.GONE);
-        } else if (locationData.getAddress() != null && !locationData.getAddress().isEmpty()) {
-            // Address needs geocoding - initiate background task
-            new GeocodeAddressTask(this).execute(locationData.getAddress(), locationData.getEventTitle());
-        } else {
-            tvMapErrorOrInfo.setText("Insufficient location data to display on map.");
-            tvMapErrorOrInfo.setVisibility(View.VISIBLE);
-        }
-    }
-
-    // Called by GeocodeAddressTask onPostExecute
-    private void onGeocodingResult(LatLng latLng, String addressString, String title, String errorMessage) {
-        handleVisibility(pbMapLoading, false);
-        if (latLng != null && googleMap != null) {
-            if (currentLocationData != null && addressString.equals(currentLocationData.getAddress())) {
-                currentLocationData.setLatitude(latLng.latitude);
-                currentLocationData.setLongitude(latLng.longitude);
-            }
-            googleMap.clear();
-            googleMap.addMarker(new MarkerOptions().position(latLng).title(title != null ? title : addressString));
-            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
-            tvMapErrorOrInfo.setVisibility(View.GONE);
-            btnOpenInMapsApp.setEnabled(true);
-        } else {
-            tvMapErrorOrInfo.setText(errorMessage != null ? errorMessage : "Could not find location for address: " + addressString);
-            tvMapErrorOrInfo.setVisibility(View.VISIBLE);
-            btnOpenInMapsApp.setEnabled(false);
-        }
-    }
-
-
     private void openInExternalMaps() {
-        if (currentLocationData == null) {
-            Toast.makeText(getContext(), "Location data not available.", Toast.LENGTH_SHORT).show();
+        Log.d(TAG, "openInExternalMaps: Attempting to open in external maps.");
+        // Strictly check if currentLocationData exists and has valid non-zero coordinates
+        if (currentLocationData == null || currentLocationData.getLatitude() == 0.0 || currentLocationData.getLongitude() == 0.0) {
+            Toast.makeText(getContext(), R.string.map_invalid_coordinates_format, Toast.LENGTH_LONG).show();
+            Log.e(TAG, "openInExternalMaps: Location data (coordinates) not available or invalid for external maps.");
             return;
         }
+
         Uri gmmIntentUri;
-        if (currentLocationData.getLatitude() != 0 && currentLocationData.getLongitude() != 0) {
-            String titleEncoded = Uri.encode(currentLocationData.getEventTitle() != null ? currentLocationData.getEventTitle() : "Event Location");
-            gmmIntentUri = Uri.parse("geo:" + currentLocationData.getLatitude() + "," + currentLocationData.getLongitude() + "?q=" + currentLocationData.getLatitude() + "," + currentLocationData.getLongitude() + "(" + titleEncoded + ")");
-        } else if (currentLocationData.getAddress() != null && !currentLocationData.getAddress().isEmpty()) {
-            gmmIntentUri = Uri.parse("geo:0,0?q=" + Uri.encode(currentLocationData.getAddress()));
-        } else {
-            Toast.makeText(getContext(), "No valid location to open.", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        String titleForMap = eventNameArg != null ? eventNameArg : getString(R.string.map_event_location_title_default);
+        String titleEncoded = Uri.encode(titleForMap);
+
+        // Always use lat/lng if available for external maps
+        gmmIntentUri = Uri.parse("geo:" + currentLocationData.getLatitude() + "," + currentLocationData.getLongitude() + "?q=" + currentLocationData.getLatitude() + "," + currentLocationData.getLongitude() + "(" + titleEncoded + ")");
+
+        Log.d(TAG, "openInExternalMaps: Constructed URI: " + gmmIntentUri.toString());
+
         Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
         mapIntent.setPackage("com.google.android.apps.maps");
+
         try {
             startActivity(mapIntent);
+            Log.d(TAG, "openInExternalMaps: Launched Google Maps app intent.");
         } catch (ActivityNotFoundException e) {
+            Log.w(TAG, "openInExternalMaps: Google Maps app not found, falling back to generic map intent.");
+            // Fallback to a generic map intent if Google Maps is not installed
             Intent genericMapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
             try {
                 startActivity(genericMapIntent);
+                Log.d(TAG, "openInExternalMaps: Launched generic map intent.");
             } catch (ActivityNotFoundException ex) {
-                Toast.makeText(getContext(), "No map application found.", Toast.LENGTH_LONG).show();
+                Toast.makeText(getContext(), R.string.map_no_app_found, Toast.LENGTH_LONG).show();
+                Log.e(TAG, "openInExternalMaps: No map application found to handle request.");
             }
         }
     }
 
-    private void handleVisibility(View view, boolean isLoading) {
+    private void handleVisibility(View view, boolean isVisible) {
         if (view != null) {
-            view.setVisibility(isLoading ? View.VISIBLE : View.GONE);
-        }
-    }
-
-    // Static inner class for AsyncTask to avoid memory leaks
-    private static class GeocodeAddressTask extends AsyncTask<String, Void, GeocodeAddressTask.GeocodeResult> {
-        private final WeakReference<MapFragment> fragmentReference;
-
-        static class GeocodeResult {
-            LatLng latLng;
-            String addressString; // Original address for context
-            String title;         // Original title for context
-            String errorMessage;
-
-            GeocodeResult(LatLng latLng, String addressString, String title) {
-                this.latLng = latLng;
-                this.addressString = addressString;
-                this.title = title;
-            }
-
-            GeocodeResult(String errorMessage, String addressString, String title) {
-                this.errorMessage = errorMessage;
-                this.addressString = addressString;
-                this.title = title;
-            }
-        }
-
-        GeocodeAddressTask(MapFragment context) {
-            fragmentReference = new WeakReference<>(context);
-        }
-
-        @Override
-        protected void onPreExecute() {
-            MapFragment fragment = fragmentReference.get();
-            if (fragment != null && fragment.getContext() != null) {
-                fragment.handleVisibility(fragment.pbMapLoading, true);
-            }
-        }
-
-        @Override
-        protected GeocodeResult doInBackground(String... params) {
-            MapFragment fragment = fragmentReference.get();
-            if (fragment == null || fragment.getContext() == null) {
-                return new GeocodeResult("Context lost during geocoding.", params[0], params.length > 1 ? params[1] : null);
-            }
-            Geocoder geocoder = new Geocoder(fragment.getContext(), Locale.getDefault());
-            String addressString = params[0];
-            String title = params.length > 1 ? params[1] : addressString;
-            try {
-                List<Address> addresses = geocoder.getFromLocationName(addressString, 1);
-                if (addresses != null && !addresses.isEmpty()) {
-                    Address location = addresses.get(0);
-                    return new GeocodeResult(new LatLng(location.getLatitude(), location.getLongitude()), addressString, title);
-                } else {
-                    return new GeocodeResult("Address not found: " + addressString, addressString, title);
-                }
-            } catch (IOException e) {
-                return new GeocodeResult("Geocoding failed: " + e.getMessage(), addressString, title);
-            }
-        }
-
-        @Override
-        protected void onPostExecute(GeocodeResult result) {
-            MapFragment fragment = fragmentReference.get();
-            if (fragment != null && fragment.isAdded()) { // Check if fragment is still added
-                fragment.onGeocodingResult(result.latLng, result.addressString, result.title, result.errorMessage);
-            }
+            view.setVisibility(isVisible ? View.VISIBLE : View.GONE);
         }
     }
 }

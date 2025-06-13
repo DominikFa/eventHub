@@ -1,65 +1,54 @@
 package com.example.event_hub.Model;
 
+import com.google.gson.annotations.SerializedName;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class LocationData {
+    @SerializedName("id")
+    private Long id; // Changed from String to Long
+    @SerializedName("streetName")
+    private String streetName;
+    @SerializedName("streetNumber")
+    private String streetNumber;
+    private String apartment;
+    @SerializedName("postalCode")
+    private String postalCode;
+    @SerializedName("city")
+    private String city;
+    @SerializedName("region")
+    private String region;
+    @SerializedName("countryIsoCode")
+    private String countryIsoCode;
+    @SerializedName("fullAddress")
+    private String fullAddress;
     private double latitude;
     private double longitude;
-    private String address; // Original address string, if available
-    private String eventTitle; // Optional: for map marker title
 
-    public LocationData(double latitude, double longitude, String address, String eventTitle) {
-        this.latitude = latitude;
-        this.longitude = longitude;
-        this.address = address;
-        this.eventTitle = eventTitle;
+    // Constructor for creating a new location without an ID (for POST requests)
+    public LocationData(String streetName, String streetNumber, String postalCode, String city,
+                        String region, String countryIsoCode) {
+        this.streetName = streetName;
+        this.streetNumber = streetNumber;
+        this.postalCode = postalCode;
+        this.city = city;
+        this.region = region;
+        this.countryIsoCode = countryIsoCode;
     }
 
-    public LocationData(String address, String eventTitle) {
-        this.address = address;
-        this.eventTitle = eventTitle;
-        // Latitude and longitude would be resolved via geocoding if only address is provided
-        this.latitude = 0; // Default
-        this.longitude = 0; // Default
-    }
-
-    public double getLatitude() {
-        return latitude;
-    }
-
-    public void setLatitude(double latitude) {
-        this.latitude = latitude;
-    }
-
-    public double getLongitude() {
-        return longitude;
-    }
-
-    public void setLongitude(double longitude) {
-        this.longitude = longitude;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public String getEventTitle() {
-        return eventTitle;
-    }
-
-    public void setEventTitle(String eventTitle) {
-        this.eventTitle = eventTitle;
-    }
-
-    @Override
-    public String toString() {
-        return "LocationData{" +
-                "latitude=" + latitude +
-                ", longitude=" + longitude +
-                ", address='" + address + '\'' +
-                ", eventTitle='" + eventTitle + '\'' +
-                '}';
+    // Constructor including apartment
+    public LocationData(String streetName, String streetNumber, String apartment, String postalCode, String city,
+                        String region, String countryIsoCode) {
+        this.streetName = streetName;
+        this.streetNumber = streetNumber;
+        this.apartment = apartment;
+        this.postalCode = postalCode;
+        this.city = city;
+        this.region = region;
+        this.countryIsoCode = countryIsoCode;
     }
 }
